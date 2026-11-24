@@ -27,6 +27,7 @@ Las visitas no tocan el VPS ni gastan cuota de Workers: solo Pages y R2.
 | `src/renfe_uptime/publish.py` | Subida a R2 con curl (el secreto va por stdin, nunca en argv) |
 | `src/renfe_uptime/cli.py` | `renfe-uptime once \| run \| serve \| export` |
 | `web/index.html` | La página. Lee `data.json`: en local, el de al lado; en producción, el de R2 |
+| `web/og.png` | La imagen de la vista previa al compartir el enlace |
 | `infra/` | systemd, scripts de despliegue, token de R2 y la ficha de Cloudflare |
 | `tests/` | Sin red. `deploy-vps.sh` no despliega si alguno falla |
 
@@ -99,3 +100,7 @@ ssh "$HOST" journalctl -u renfe-uptime -n 20 --no-pager -o cat
 
 Los recursos de Cloudflare (bucket, dominios, CORS, DNS y Pages), y cómo se crearon, están en
 [`infra/cloudflare/README.md`](infra/cloudflare/README.md).
+
+## Licencia
+
+MIT. Ver [LICENSE](LICENSE).

@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>¿Cuántos nueves tiene Renfe?</title>
 <meta name="description" content="El uptime de Renfe medido como el de un servicio de software: sus webs y sus trenes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://renfe.borjagm1.com/">
+<meta property="og:title" content="¿Cuántos nueves tiene Renfe?">
+<meta property="og:description" content="El uptime de Renfe medido como el de un servicio de software: sus webs y sus trenes, cada 5 minutos.">
+<meta property="og:image" content="https://renfe.borjagm1.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="¿Cuántos nueves tiene Renfe?">
+<meta name="twitter:description" content="El uptime de Renfe medido como el de un servicio de software: sus webs y sus trenes, cada 5 minutos.">
+<meta name="twitter:image" content="https://renfe.borjagm1.com/og.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚆</text></svg>">
 <style>
 :root { --bg:#f6f5f1; --fg:#1d1d1b; --muted:#6b6a65; --line:#dedcd5; --card:#fff;
         --good:#2f8f5b; --warn:#d9a21b; --bad:#c8432f; --none:#d8d6cf; }
@@ -28,6 +41,7 @@ th, td { text-align:left; vertical-align:top; padding:10px 12px; border-bottom:1
 th { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px }
 .num { white-space:nowrap; font-variant-numeric:tabular-nums } .svc { font-weight:600 }
 .how { color:var(--muted); font-size:12.5px }
+td.state .how { display:block; margin-top:2px }
 .pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12.5px; font-weight:600; color:#fff }
 .pill.up { background:var(--good) } .pill.down { background:var(--bad) } .pill.none { background:var(--none) }
 .bars { display:flex; gap:1px; height:26px; align-items:stretch; min-width:180px }
@@ -37,8 +51,20 @@ th { font-size:12px; color:var(--muted); font-weight:600; text-transform:upperca
 .trains { display:grid; grid-template-columns:1fr 1fr; gap:16px }
 a { color:inherit }
 footer { margin-top:40px; color:var(--muted); font-size:13px } footer li { margin:4px 0 }
-@media (max-width:760px) { .hero, .trains { grid-template-columns:1fr } table { font-size:13px }
-  .bars { min-width:110px } }
+@media (max-width:760px) {
+  .hero, .trains { grid-template-columns:1fr }
+  .big { font-size:38px }
+  table, tbody, tr, td { display:block; width:100% }
+  table { background:none; border:0 }
+  tr.head { display:none }
+  tr { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:12px }
+  td { border:0; padding:4px 0 }
+  td[data-label] { display:flex; justify-content:space-between; gap:12px }
+  td[data-label]::before { content:attr(data-label); color:var(--muted); font-size:12.5px; white-space:nowrap }
+  td[data-label] > * { text-align:right }
+  td.state .how { display:inline; margin-left:6px }
+  .bars { min-width:0; margin-top:6px }
+}
 </style>
 </head>
 <body>
@@ -98,10 +124,10 @@ function render(d) {
     const latency = s.latency_ms === null ? "—" : (s.latency_ms / 1000).toFixed(1).replace(".", ",") + " s";
     return `<tr>
       <td><div class="svc">${esc(s.name)}</div><div class="how">${esc(s.how)}</div></td>
-      <td><span class="pill ${state}">${label}</span><div class="how">${esc(s.now?.detail)}</div></td>
-      <td class="num">${pct(s.uptime["24h"])}<div class="how">${nines(s.uptime["24h"])}</div></td>
-      <td class="num">${pct(s.uptime["72h"])}<div class="how">${nines(s.uptime["72h"])}</div></td>
-      <td class="num">${latency}</td>
+      <td class="state"><span class="pill ${state}">${label}</span> <span class="how">${esc(s.now?.detail)}</span></td>
+      <td class="num" data-label="24 h"><div>${pct(s.uptime["24h"])}<div class="how">${nines(s.uptime["24h"])}</div></div></td>
+      <td class="num" data-label="3 días"><div>${pct(s.uptime["72h"])}<div class="how">${nines(s.uptime["72h"])}</div></div></td>
+      <td class="num" data-label="Respuesta"><span>${latency}</span></td>
       <td>${bars(s.hourly, 0.999, 0.9)}</td>
     </tr>`;
   }).join("");
@@ -142,7 +168,7 @@ function render(d) {
     </div>
     <h2>Servicios web</h2>
     <table>
-      <tr><th>Servicio</th><th>Ahora</th><th>24 h</th><th>3 días</th><th>Respuesta</th><th>Por hora</th></tr>
+      <tr class="head"><th>Servicio</th><th>Ahora</th><th>24 h</th><th>3 días</th><th>Respuesta</th><th>Por hora</th></tr>
       ${services}
     </table>
     <h2>Trenes</h2>
