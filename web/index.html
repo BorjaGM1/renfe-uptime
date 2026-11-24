@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Cuántos nueves tiene Renfe?</title>
+<meta name="description" content="El uptime de Renfe medido como el de un servicio de software: sus webs y sus trenes.">
+<style>
+:root { --bg:#f6f5f1; --fg:#1d1d1b; --muted:#6b6a65; --line:#dedcd5; --card:#fff;
+        --good:#2f8f5b; --warn:#d9a21b; --bad:#c8432f; --none:#d8d6cf; }
+@media (prefers-color-scheme: dark) { :root { --bg:#161614; --fg:#ecebe6; --muted:#9a988f; --line:#33322e;
+        --card:#1f1e1b; --none:#3a3934; } }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",
+       Roboto,sans-serif; }
+main { max-width:1100px; margin:0 auto; padding:32px 20px 60px }
+h1 { font-size:34px; margin:0 0 4px; letter-spacing:-.5px } h2 { margin:40px 0 12px; font-size:20px }
+h3 { margin:0 0 8px; font-size:16px }
+.lede { color:var(--muted); margin:0 0 24px }
+.alert { background:var(--bad); color:#fff; border-radius:10px; padding:10px 14px; margin:0 0 20px; font-weight:600 }
+.hero { display:grid; grid-template-columns:1fr 1fr; gap:16px }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px }
+.big { font-size:44px; font-weight:700; letter-spacing:-1px; line-height:1.1 }
+.sub { color:var(--muted) } .facts { margin:12px 0; display:grid; gap:3px }
+table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
+        border-radius:12px; overflow:hidden }
+th, td { text-align:left; vertical-align:top; padding:10px 12px; border-bottom:1px solid var(--line) }
+th { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px }
+.num { white-space:nowrap; font-variant-numeric:tabular-nums } .svc { font-weight:600 }
+.how { color:var(--muted); font-size:12.5px }
+.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12.5px; font-weight:600; color:#fff }
+.pill.up { background:var(--good) } .pill.down { background:var(--bad) } .pill.none { background:var(--none) }
+.bars { display:flex; gap:1px; height:26px; align-items:stretch; min-width:180px }
+.bar { flex:1; border-radius:1px; background:var(--none) }
+.bar.good { background:var(--good) } .bar.warn { background:var(--warn) } .bar.bad { background:var(--bad) }
+.axis { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:2px }
+.trains { display:grid; grid-template-columns:1fr 1fr; gap:16px }
+a { color:inherit }
+footer { margin-top:40px; color:var(--muted); font-size:13px } footer li { margin:4px 0 }
+@media (max-width:760px) { .hero, .trains { grid-template-columns:1fr } table { font-size:13px }
+  .bars { min-width:110px } }
+</style>
+</head>
+<body>
+<main>
+  <h1>¿Cuántos nueves tiene Renfe?</h1>
+  <p class="lede">En software se mide la disponibilidad en nueves: 99,9 % son tres nueves. Aquí se mide Renfe con la
+  misma vara: sus servicios web y sus trenes. <span id="updated"></span></p>
+  <div id="app"><p class="how">Cargando…</p></div>
+</main>
+<script>
+// En local (uptime.py serve) el data.json se sirve al lado. En producción viene de R2.
+const PROD_DATA_URL = "https://renfe-data.borjagm1.com/data.json";  // se fija al desplegar
+const LOCAL = location.protocol === "file:" || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const DATA_URL = LOCAL ? "data.json" : PROD_DATA_URL;
+const REFRESH_MS = 5 * 60 * 1000;
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;",
+  '"': "&quot;", "'": "&#39;" })[c]);
+const madrid = (ts, opts) => new Date(ts * 1000).toLocaleString("es-ES", { timeZone: "Europe/Madrid", ...opts });
+const hhmm = (ts) => madrid(ts, { hour: "2-digit", minute: "2-digit" });
+
+function pct(p, digits = 2) {
+  if (p === null || p === undefined) return "—";
+  let text = (p * 100).toFixed(digits);
+  if (digits) text = text.replace(/\.?0+$/, "");
+  return text.replace(".", ",") + " %";
+}
+
+function nines(p) {  // 99 % son 2 nueves, 99,9 % son 3, 50 % son 0,3
+  if (p === null || p === undefined) return "—";
+  if (p >= 1) return "ningún fallo medido";
+  return (-Math.log10(1 - p)).toFixed(1).replace(".", ",") + " nueves";
+}
+
+function bars(hourly, good, warn, suffix = "") {
+  const cells = hourly.values.map((p, i) => {
+    const level = p === null ? "none" : p >= good ? "good" : p >= warn ? "warn" : "bad";
+    const label = `${madrid(hourly.start + i * 3600, { day: "2-digit", month: "2-digit", hour: "2-digit" })}:00 · ${pct(p, 1)}${suffix}`;
+    return `<span class="bar ${level}" title="${esc(label)}"></span>`;
+  }).join("");
+  return `<div class="bars">${cells}</div><div class="axis"><span>hace ${hourly.values.length} h</span><span>ahora</span></div>`;
+}
+
+function render(d) {
+  const generated = Date.parse(d.generated_at) / 1000;
+  const age = Date.now() / 1000 - generated;
+  document.getElementById("updated").textContent =
+    `Actualizado el ${madrid(generated, { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${hhmm(generated)}.`;
+  const stale = age > 3 * d.interval_s
+    ? `<p class="alert">Estos datos llevan ${Math.round(age / 60)} min sin actualizarse: el medidor está parado,
+       no Renfe. Las cifras de abajo son de entonces.</p>` : "";
+  const ld = d.trains.find((t) => t.kind === "ld");
+
+  const services = d.services.map((s) => {
+    const state = !s.now ? "none" : s.now.ok ? "up" : "down";
+    const label = { none: "sin datos", up: "funciona", down: "caído" }[state];
+    const latency = s.latency_ms === null ? "—" : (s.latency_ms / 1000).toFixed(1).replace(".", ",") + " s";
+    return `<tr>
+      <td><div class="svc">${esc(s.name)}</div><div class="how">${esc(s.how)}</div></td>
+      <td><span class="pill ${state}">${label}</span><div class="how">${esc(s.now?.detail)}</div></td>
+      <td class="num">${pct(s.uptime["24h"])}<div class="how">${nines(s.uptime["24h"])}</div></td>
+      <td class="num">${pct(s.uptime["72h"])}<div class="how">${nines(s.uptime["72h"])}</div></td>
+      <td class="num">${latency}</td>
+      <td>${bars(s.hourly, 0.999, 0.9)}</td>
+    </tr>`;
+  }).join("");
+
+  const trains = d.trains.map((t) => {
+    const worst = t.worst_24h
+      ? `${t.worst_24h.delay} min · tren ${esc(t.worst_24h.train)}${t.worst_24h.route ? ` (${esc(t.worst_24h.route)})` : ""}, a las ${hhmm(t.worst_24h.ts)}`
+      : "—";
+    const now = t.now ? `${pct(t.now.punctual, 0)} (${t.now.n} trenes)` : "—";
+    const canceled = t.canceled ? `<div><b>${pct(t.canceled["24h"])}</b> cancelados en 24 h</div>` : "";
+    return `<section class="card">
+      <h3>${esc(t.title)}</h3>
+      <div class="big">${pct(t.punctual["24h"], 1)}</div>
+      <div class="sub">puntuales en 24 h · <b>${nines(t.punctual["24h"])}</b></div>
+      <div class="facts">
+        <div><b>${now}</b> ahora</div>
+        <div><b>${pct(t.punctual["72h"], 1)}</b> en 3 días</div>
+        ${canceled}
+        <div>Peor retraso en 24 h: <b>${worst}</b></div>
+      </div>
+      ${bars(t.hourly, 0.9, 0.6, " puntuales")}
+      <p class="how">${esc(t.note)} Cada tren cuenta una vez por ronda mientras circula: es puntualidad por tiempo
+      en circulación, como el uptime de un servicio.</p>
+    </section>`;
+  }).join("");
+
+  const since = d.first_ts ? madrid(d.first_ts, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+  document.getElementById("app").innerHTML = `${stale}
+    <div class="hero">
+      <section class="card"><h3>Servicios web, todos a la vez</h3>
+        <div class="big">${pct(d.all_up["24h"])}</div>
+        <div class="sub">de las rondas de las últimas 24 h con todo funcionando · <b>${nines(d.all_up["24h"])}</b></div>
+      </section>
+      <section class="card"><h3>Trenes de larga distancia</h3>
+        <div class="big">${pct(ld?.punctual["24h"], 1)}</div>
+        <div class="sub">del tiempo en circulación a 5 min o menos de su hora · <b>${nines(ld?.punctual["24h"])}</b></div>
+      </section>
+    </div>
+    <h2>Servicios web</h2>
+    <table>
+      <tr><th>Servicio</th><th>Ahora</th><th>24 h</th><th>3 días</th><th>Respuesta</th><th>Por hora</th></tr>
+      ${services}
+    </table>
+    <h2>Trenes</h2>
+    <div class="trains">${trains}</div>
+    <footer>
+      <p>Cómo se mide. ${d.rounds} rondas desde el ${since}, una cada ${d.interval_s / 60} min. Se guardan los
+      últimos ${d.retention_h / 24} días.</p>
+      <ul>
+        <li>Cada ronda prueba cada servicio una vez. Si una petición no contesta en ${d.timeout_s} s, la comprobación
+        entera no acaba en ${d.check_deadline_s} s (reintentos incluidos), da un error o devuelve otra cosa, cuenta
+        como caído en esa ronda.</li>
+        <li>Antes de cada ronda se comprueba que el medidor tiene internet. Si no, la ronda no cuenta: el fallo es
+        nuestro.</li>
+        <li>El retraso es el último que Renfe publica. Un tren parado conserva su último retraso, así que la
+        puntualidad real puede ser algo peor. Los trenes que el mapa deja colgados horas después se descartan.</li>
+        <li>De noche el mapa de larga distancia está vacío: no hay trenes que medir, y el mapa cuenta como
+        funcionando si responde.</li>
+        <li>Son endpoints públicos pero no oficiales: si Renfe los cambia, saldrá como caído hasta que se arregle.
+        La búsqueda y el mapa se hacen con <a href="https://github.com/luisgonzaleznf/renfe-cli">Renfe CLI</a>, con
+        sus reintentos: cuentan como caídos si fallan también tras ellos.</li>
+      </ul>
+    </footer>`;
+}
+
+async function load() {
+  try {
+    const res = await fetch(DATA_URL, { cache: "no-cache" });  // revalida con ETag, sin ?t= que rompa la caché
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    render(await res.json());
+  } catch (err) {
+    if (!document.querySelector(".hero")) {
+      document.getElementById("app").innerHTML = `<p class="alert">No se han podido cargar los datos (${esc(err.message)}).</p>`;
+    }
+  }
+}
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>

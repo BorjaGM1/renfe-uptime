@@ -1,0 +1,7 @@
+data/
+site/
+.venv/
+__pycache__/
+*.pyc
+tests/.home/
+infra/deploy.env

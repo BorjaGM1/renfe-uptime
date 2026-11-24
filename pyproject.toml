@@ -1,0 +1,27 @@
+[project]
+name = "renfe-uptime"
+version = "0.1.0"
+description = "¿Cuántos nueves tiene Renfe? El uptime de sus webs y la puntualidad de sus trenes, cada 5 minutos"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "certifi",
+    # Endpoints, cliente, mapa en tiempo real y estaciones de Renfe CLI, fijado a un commit.
+    # Para actualizar: uv lock --upgrade-package renfe-cli, pasar los tests y desplegar (infra/deploy-vps.sh).
+    "renfe-cli @ git+https://github.com/luisgonzaleznf/renfe-cli@05222623dddc04893f66bcaa976976852de808d5",
+]
+
+[project.scripts]
+renfe-uptime = "renfe_uptime.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["uv_build>=0.10,<0.11"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

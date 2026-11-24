@@ -1,0 +1,23 @@
+[Unit]
+Description=Renfe uptime: una ronda de medidas y subida a R2
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=renfe-uptime
+Group=renfe-uptime
+WorkingDirectory=/opt/renfe-uptime
+Environment=RENFE_UPTIME_HOME=/opt/renfe-uptime
+EnvironmentFile=/etc/renfe-uptime.env
+ExecStart=/opt/renfe-uptime/.venv/bin/renfe-uptime once
+# Red 30 s + comprobaciones 60 s + subida 30 s, con margen. El timer va cada 300 s.
+TimeoutStartSec=200
+MemoryMax=192M
+CPUQuota=20%
+Nice=10
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/opt/renfe-uptime/data /opt/renfe-uptime/site
