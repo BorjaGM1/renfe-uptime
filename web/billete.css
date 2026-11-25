@@ -1,0 +1,21 @@
+/* Las dos fuentes propias (Numeradora 49, SIL OFL: fonts/LICENSE-numeradora49.txt), que usan las paletas
+   históricas. Las de la paleta por defecto van en fonts/renfe-actual.css; las de las demás paletas las enlaza
+   billete.js desde Google Fonts. */
+@font-face { font-family: "Numeradora 49"; src: url("fonts/Numeradora49-Regular.woff2") format("woff2"); font-weight: 1 1000; font-style: normal; font-display: block; }
+@font-face { font-family: "Numeradora 49 Rotulo"; src: url("fonts/Numeradora49Rotulo-Regular.woff2") format("woff2"); font-weight: 1 1000; font-style: normal; font-display: block; }
+
+/* E · El billete picado. El cartón es un SVG compuesto en décimas de milímetro (billete.js); aquí solo va lo
+   que es de la página: cómo asienta y el único movimiento que hay, el picado al cargar. */
+.carton { display: block; width: 100%; height: auto; overflow: visible; font-synthesis: none; font-kerning: normal;
+  font-variant-numeric: lining-nums; text-rendering: geometricPrecision; -webkit-font-smoothing: antialiased; user-select: none; }
+.carton text { white-space: pre; }
+
+/* Las tapas cubren cada agujero hasta que le toca. Sin movimiento (o con prefers-reduced-motion) no existen:
+   el billete llega ya picado. Con movimiento, el picador da un golpe por agujero, seguido, y termina antes de
+   0,8 s, porque una captura a mitad enseñaría menos retraso del medido. Un golpe no tiene transición: la tapa
+   está o no está. */
+.tapa { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .carton.pica .tapa { animation: picar 1ms steps(1, end) both; animation-delay: calc(170ms + var(--i) * 12ms); }
+}
+@keyframes picar { from { opacity: 1; } to { opacity: 0; } }

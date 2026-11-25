@@ -17,7 +17,11 @@ Qué es y cómo está montado: [README](README.md). Recursos de Cloudflare: [inf
   despliega con `infra/deploy-vps.sh`. No copies su código aquí: si falta algo, se usa desde el paquete.
 - **El User-Agent es `renfe-uptime/...`, también en las peticiones de Renfe CLI** (`checks.py` lo sobrescribe).
   No te hagas pasar por un navegador ni por el CLI.
-- **Nunca cache-busting con `?t=`**: la página revalida con ETag (`cache: "no-cache"`).
+- **Nunca cache-busting con `?t=` en `data.json`**: la página revalida con ETag (`cache: "no-cache"`). El
+  JavaScript y las hojas sí llevan `?v=` con su huella, pero no se escribe a mano: lo pone `infra/build-page.py`
+  al publicar, porque el dominio los sirve con cuatro horas de caché de navegador.
+- **La página se prueba con sus casos** (`web/pruebas/`, `?estado=` en local) antes de publicarla. Si cambia la
+  forma de `data.json`, cambian también los casos: hay un test que lo comprueba.
 - **El token de R2 solo vive en `/etc/renfe-uptime.env` del VPS** (modo 600). Nunca en el repo, en argv ni en
   el chat.
 - **En el VPS este proyecto solo usa `/opt/renfe-uptime`, `/etc/renfe-uptime.env` y sus dos unidades de

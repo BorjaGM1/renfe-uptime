@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>¿Cuántos nueves tiene Renfe?</title>
-<meta name="description" content="El uptime de Renfe medido como el de un servicio de software: sus webs y sus trenes.">
+<meta name="description" content="Renfe, medida desde fuera cada 5 minutos como se mide un servicio de software. Cada medición, un billete numerado y fechado. No es de Renfe.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://renfe.borjagm1.com/">
 <meta property="og:title" content="¿Cuántos nueves tiene Renfe?">
@@ -17,195 +17,521 @@
 <meta name="twitter:title" content="¿Cuántos nueves tiene Renfe?">
 <meta name="twitter:description" content="El uptime de Renfe medido como el de un servicio de software: sus webs y sus trenes, cada 5 minutos.">
 <meta name="twitter:image" content="https://renfe.borjagm1.com/og.png">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚆</text></svg>">
+<!-- og.png es el billete tumbado de una ronda (billete.js, `imagen(L, false)`). Es fija: no cambia con cada ronda. -->
+<!-- El icono lo dibuja billete.js con la cifra de la ronda; hasta entonces, ninguno (y sin pedir favicon.ico). -->
+<link rel="icon" href="data:,">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#430438">
+<!-- Las letras de la paleta por defecto van en fonts/ (SIL OFL) y se piden ya desde aquí, a la vez que el
+     JavaScript. Las de las otras paletas (?paleta=) las enlaza billete.js desde Google Fonts. -->
+<link rel="stylesheet" href="fonts/renfe-actual.css">
+<link rel="preload" href="fonts/FiraSans-900.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FiraSans-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FiraSans-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FiraSans-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FiraSans-400i.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FiraSansExtraCondensed-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FiraSansExtraCondensed-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FiraSansExtraCondensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/DotGothic16-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/Doto-900.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="billete.css">
 <style>
-:root { --bg:#f6f5f1; --fg:#1d1d1b; --muted:#6b6a65; --line:#dedcd5; --card:#fff;
-        --good:#2f8f5b; --warn:#d9a21b; --bad:#c8432f; --none:#d8d6cf; }
-@media (prefers-color-scheme: dark) { :root { --bg:#161614; --fg:#ecebe6; --muted:#9a988f; --line:#33322e;
-        --card:#1f1e1b; --none:#3a3934; } }
-* { box-sizing:border-box }
-body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",
-       Roboto,sans-serif; }
-main { max-width:1100px; margin:0 auto; padding:32px 20px 60px }
-h1 { font-size:34px; margin:0 0 4px; letter-spacing:-.5px } h2 { margin:40px 0 12px; font-size:20px }
-h3 { margin:0 0 8px; font-size:16px }
-.lede { color:var(--muted); margin:0 0 24px }
-.alert { background:var(--bad); color:#fff; border-radius:10px; padding:10px 14px; margin:0 0 20px; font-weight:600 }
-.hero { display:grid; grid-template-columns:1fr 1fr; gap:16px }
-.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px }
-.big { font-size:44px; font-weight:700; letter-spacing:-1px; line-height:1.1 }
-.sub { color:var(--muted) } .facts { margin:12px 0; display:grid; gap:3px }
-table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
-        border-radius:12px; overflow:hidden }
-th, td { text-align:left; vertical-align:top; padding:10px 12px; border-bottom:1px solid var(--line) }
-th { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px }
-.num { white-space:nowrap; font-variant-numeric:tabular-nums } .svc { font-weight:600 }
-.how { color:var(--muted); font-size:12.5px }
-td.state .how { display:block; margin-top:2px }
-.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12.5px; font-weight:600; color:#fff }
-.pill.up { background:var(--good) } .pill.down { background:var(--bad) } .pill.none { background:var(--none) }
-.bars { display:flex; gap:1px; height:26px; align-items:stretch; min-width:180px }
-.bar { flex:1; border-radius:1px; background:var(--none) }
-.bar.good { background:var(--good) } .bar.warn { background:var(--warn) } .bar.bad { background:var(--bad) }
-.axis { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:2px }
-.trains { display:grid; grid-template-columns:1fr 1fr; gap:16px }
-a { color:inherit }
-footer { margin-top:40px; color:var(--muted); font-size:13px } footer li { margin:4px 0 }
-@media (max-width:760px) {
-  .hero, .trains { grid-template-columns:1fr }
-  .big { font-size:38px }
-  table, tbody, tr, td { display:block; width:100% }
-  table { background:none; border:0 }
-  tr.head { display:none }
-  tr { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:12px }
-  td { border:0; padding:4px 0 }
-  td[data-label] { display:flex; justify-content:space-between; gap:12px }
-  td[data-label]::before { content:attr(data-label); color:var(--muted); font-size:12.5px; white-space:nowrap }
-  td[data-label] > * { text-align:right }
-  td.state .how { display:inline; margin-left:6px }
-  .bars { min-width:0; margin-top:6px }
+/* La página es un mostrador y, encima, cartón: el billete y su dorso, que es el mismo cartón dado la vuelta, y
+   las otras dos piezas. Los colores los pone la paleta (billete.js, PALETAS) al arrancar, y con ellos el fondo.
+   No hay tema claro y tema oscuro: un objeto no cambia de color porque cambie el sistema, y el mostrador ya es
+   oscuro. Los valores de abajo son los de la paleta por defecto, para que nada cambie de color al arrancar. */
+:root { --mostrador: #430438; --claro: #ffffff; --medio: #efe2eb; --tinta: #1a1a1a; --boton: #ffffff; color-scheme: dark;
+  /* La letra también la pone la paleta (billete.js, TIPOS): título, texto, rótulo y serie. */
+  --f-titulo: 'Fira Sans', 'Helvetica Neue', Arial, sans-serif; --p-titulo: 700; --f-texto: 'Fira Sans', 'Helvetica Neue', Arial, sans-serif; --p-texto: 400;
+  --f-rotulo: 'Fira Sans Extra Condensed', 'Arial Narrow', Arial, sans-serif; --p-rotulo: 600; --e-rotulo: normal; --t-rotulo: .05em;
+  --f-serie: 'Fira Sans', 'Helvetica Neue', Arial, sans-serif; --e-texto: normal; --e-tabla: normal;
+  --ancho: min(100%, 420px, calc((100vh - 96px) * 30.5 / 57)); }
+@supports (height: 100svh) { :root { --ancho: min(100%, 420px, calc((100svh - 96px) * 30.5 / 57)); } }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; background: var(--mostrador); }
+body { margin: 0; background: var(--mostrador); color: var(--claro); font: var(--p-texto) 16px/1.5 var(--f-texto); font-stretch: var(--e-texto);
+  font-variant-numeric: lining-nums tabular-nums; font-synthesis: none; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+a { color: inherit; text-underline-offset: .18em; text-decoration-thickness: 1px; }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; padding: 0; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ley { font-family: var(--f-rotulo); font-weight: var(--p-rotulo); font-stretch: var(--e-rotulo); text-transform: uppercase; letter-spacing: var(--t-rotulo); font-size: 13px; line-height: 1.2; }
+.col { max-width: 1104px; margin-inline: auto; padding-inline: 16px; }
+.pc { display: none; }
+
+/* ── El mostrador ── */
+/* Arriba, el aviso: lo primero que se lee, en una línea. */
+.arriba { padding-block: 12px 11px; color: var(--claro); font-size: 12.5px; text-align: center; text-wrap: balance; }
+.arriba { width: var(--mesa, auto); margin-inline: auto; }
+/* Todo lo que hay sobre el mostrador tiene el ancho del cartón. El cartón, su proporción exacta y tan grande
+   como quepa entero en la primera pantalla. */
+/* Sobre el mostrador hay tres piezas del mismo mundo: el billete grande (larga y media distancia, AVE incluido),
+   el de Cercanías y el justificante de la máquina, con las seis webs. En el móvil, el grande llena la primera
+   pantalla y las otras dos van debajo; en escritorio, las tres juntas. */
+.mesa { width: var(--mesa, var(--ancho)); margin-inline: auto; }
+.mesa { display: grid; gap: 22px; justify-items: center; }
+[hidden] { display: none !important; }
+/* El billete tiene dos caras: delante, el cartón; detrás, sus datos. Se le da la vuelta en el sitio. */
+.carta { width: var(--ancho); perspective: 1500px; }
+.carta > * { transform-origin: 50% 50%; }
+.marco { width: var(--ancho); aspect-ratio: 30.5 / 57; }
+.pieza { display: block; width: 100%; }
+.pieza.recibo { width: 240px; }
+/* Las otras dos piezas, cada una con su cartela: la misma gramática que el billete grande. */
+.vitrina { width: var(--mesa, var(--ancho)); margin: 72px auto 0; display: grid; gap: 22px; justify-items: center; }
+.tit { font: var(--p-texto) 22px/1.2 var(--f-titulo); letter-spacing: -.008em; text-wrap: balance; }
+.kicker { color: var(--medio); font-size: 14px; }
+.remate { display: block; margin-top: .28em; }
+.tres { width: var(--mesa, var(--ancho)); margin: 56px auto 0; }
+.pieza .que { color: var(--medio); }
+.disc { font: inherit; font-size: 15px; color: var(--medio); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: .2em; text-decoration-thickness: 1px; }
+.disc:focus-visible { outline: 2px solid var(--claro); outline-offset: 3px; }
+
+/* Debajo del cartón: lo que haya que decir de ahora mismo, la frase, y un solo gesto. */
+.cartela { width: 100%; display: grid; gap: 16px; }
+.dice { display: grid; gap: 12px; }
+.sub { font-size: 17px; line-height: 1.47; color: var(--medio); text-wrap: pretty; max-width: 34em; }
+.aviso .t { font: var(--p-titulo) 21px/1.2 var(--f-titulo); text-wrap: balance; }
+.aviso .s { font-size: 16px; line-height: 1.4; font-stretch: 92%; margin-top: 6px; color: var(--medio); }
+.lede { font: var(--p-texto) 21px/1.24 var(--f-titulo); letter-spacing: -.008em; text-wrap: balance; }
+.nota { font-size: 16px; line-height: 1.4; font-stretch: 92%; color: var(--medio); }
+/* Los enlaces-botón llevan aire arriba y abajo para que el dedo acierte (44 px de alto). */
+.actos { display: grid; gap: 6px; justify-items: start; }
+.actos .mas { display: flex; flex-wrap: wrap; gap: 0 24px; }
+.actos .disc, .tres .disc, .dorso .disc { padding-block: 11px; }
+.actos button { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; border-radius: 0; }
+.actos .disc { color: var(--claro); font-size: 16px; }
+.actos .pral { font-family: var(--f-rotulo); font-weight: var(--p-rotulo); font-stretch: var(--e-rotulo); text-transform: uppercase; letter-spacing: var(--t-rotulo); font-size: 15px; line-height: 1;
+  padding: 13px 18px 12px; background: var(--boton); color: var(--tinta); }
+.actos button:disabled { opacity: .45; cursor: default; }
+.actos :focus-visible, a:focus-visible { outline: 2px solid var(--claro); outline-offset: 3px; }
+
+
+/* ── El dorso: el mismo cartón, dado la vuelta. Los cuadros, compuestos como los de una guía de horarios. ── */
+.dorso { --ink: var(--tinta); width: var(--ancho); min-height: calc(var(--ancho) * 57 / 30.5); background: var(--carton); color: var(--ink); padding: 15px 16px 22px; box-shadow: 3px 4px 0 var(--sombra, #0008); }
+.dorso .disc { color: var(--ink2); margin-top: 12px; }
+.dorso .disc:focus-visible, .dorso summary:focus-visible { outline-color: var(--ink); }
+.dorso .plega { color: var(--ink); }
+.dcab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.dcab .num { font: 600 16px/1 var(--f-serie); letter-spacing: .1em; }
+.cuadro { margin-top: 26px; }
+.ccab { border-top: 1.5px solid var(--ink); padding-top: 7px; text-wrap: balance; }
+.cuadro h2 { font: var(--p-titulo) 22px/1.15 var(--f-titulo); letter-spacing: -.01em; margin-top: 12px; }
+.cuadro .resp { margin-top: 5px; font-size: 15.5px; line-height: 1.4; font-stretch: 92%; }
+.tt { --c: var(--col, 76px); --lh: 25px; margin-top: 12px; border-top: 1px solid var(--ink); border-bottom: 3px solid var(--ink); font-size: 15px; font-stretch: var(--e-tabla); line-height: var(--lh); }
+.ccab + .tt { margin-top: 9px; }
+.r { display: grid; grid-template-columns: minmax(0, 1fr) var(--c) var(--c); }
+.r > .t { border-left: 1px solid var(--ink); text-align: center; white-space: nowrap; padding-inline: 2px; }
+.r.hd { border-bottom: 1px solid var(--ink); font-weight: 700; line-height: 1.1; font-stretch: 68%; }
+.r.hd > * { padding: 7px 3px 6px; display: flex; align-items: flex-end; }
+.r.hd > .t { justify-content: center; white-space: normal; text-align: center; }
+.r.hd > .p { padding-left: 0; background: none; white-space: normal; }
+.r.pri > * { padding-top: 5px; } .r.ult > * { padding-bottom: 6px; }
+/* Puntos conductores: llevan del nombre a su cifra. */
+.p { min-width: 0; padding-right: 8px; overflow: hidden;
+  background: radial-gradient(circle, var(--ink) .8px, transparent 1.15px) 0 calc(100% + 6px) / 7px var(--lh) repeat-x content-box; }
+.tt .r:not(.hd):not(.det) > .t { display: flex; align-items: flex-end; justify-content: center; }
+.p .nm { background: var(--carton); padding-right: 6px; }
+.p .nm b { font-weight: 800; font-stretch: 88%; }
+/* Un rótulo de dos renglones: los puntos salen solo del último. */
+.p.dos { white-space: normal; background-position: 0 calc(100% + 6px); }
+.r.multi > .t { display: flex; align-items: flex-end; justify-content: center; }
+/* El detalle de cada web va debajo de su nombre, en su renglón y sin puntos. */
+.r.det > .p { background: none; color: var(--ink2); font-size: 15px; line-height: 1.25; padding-bottom: 6px; margin-top: -2px; }
+.t b { font-weight: 800; font-stretch: 88%; }
+.t.gr b { font: 700 21px/1 var(--f-serie); }
+.t i { font-stretch: 68%; }
+.t .none { color: var(--ink2); }
+.r.raya > * { border-top: 1px solid var(--ink); margin-top: 4px; padding-top: 4px; }
+/* Las llamadas cuelgan de su cifra, como en un horario. */
+.ll { font-size: .74em; font-weight: 700; font-stretch: 100%; vertical-align: .42em; line-height: 0; margin-left: 1px; font-style: normal; }
+.notas { margin-top: 12px; list-style: none; font-size: 15px; line-height: 1.4; font-stretch: 92%; color: var(--ink2); }
+.notas li { display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 2px; }
+.notas li + li { margin-top: 6px; }
+.notas .m { font-weight: 800; font-stretch: 100%; color: var(--ink); }
+.cond { margin-top: 9px; display: grid; gap: 12px 40px; font-size: 15px; line-height: 1.48; font-stretch: 94%; color: var(--ink2); }
+.cond b { color: var(--ink); font-weight: 650; }
+.pieweb { width: var(--mesa, var(--ancho)); margin: 30px auto 0; padding-bottom: 44px; color: var(--medio); font-size: 16px; line-height: 1.5; }
+.pieweb p + p { margin-top: 10px; }
+.pieweb .enl { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.pieweb b { color: var(--claro); font-weight: 600; }
+/* El aviso legal, en letra pequeña y al final del todo. Arriba de la página ya va en una línea. */
+.pieweb .legal { font-size: 13px; line-height: 1.5; margin-top: 22px; max-width: 46em; }
+.pieweb .legal b { color: inherit; }
+.err { padding: 40px 0; }
+.plega { margin-top: 14px; }
+.plega > summary { cursor: pointer; list-style: none; display: inline-flex; gap: 8px; align-items: center; color: inherit; }
+.plega > summary::-webkit-details-marker { display: none; }
+.plega > summary::before { content: "+"; font-weight: 700; width: 1em; }
+.plega[open] > summary::before { content: "−"; }
+.plega > summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+@media (min-width: 380px) { .tt { --c: calc(var(--col, 76px) + 8px); } }
+/* Escritorio: el billete y, a su lado, su cartela, como la de una pieza en una vitrina. Debajo, las otras dos
+   piezas de la ronda, en las mismas dos columnas. */
+@media (min-width: 1000px) {
+  /* Todo sale del ancho del billete: la cartela, el hueco y el cuerpo de la frase crecen con él. */
+  :root { --ancho: min(500px, max(352px, calc((100vh - 128px) * 30.5 / 57))); --cartela: calc(var(--ancho) * 1.07); --hueco: calc(var(--ancho) * .2); --mesa: calc(var(--ancho) + var(--hueco) + var(--cartela)); }
+  .col { padding-inline: 32px; max-width: none; }
+  .mesa, .vitrina { grid-template-columns: var(--ancho) var(--cartela); column-gap: var(--hueco); justify-content: center; justify-items: start; align-items: center; }
+  .mesa { align-items: start; }
+  .cartela { min-height: calc(var(--ancho) * 57 / 30.5); align-content: center; gap: 20px; }
+  .cartela.chica { min-height: 0; gap: 16px; }
+  .lede { font-size: calc(var(--ancho) * .079); line-height: 1.14; }
+  .tit { font-size: calc(var(--ancho) * .062); line-height: 1.16; }
+  .aviso .t { font-size: 24px; }
+  .sub { font-size: clamp(16.5px, calc(var(--ancho) * .043), 18px); }
+  .actos { margin-top: 6px; gap: 10px; }
+  .cartela.chica .actos { margin-top: 0; }
+  .vitrina { margin-top: 128px; }
+  .vitrina .pieza { justify-self: center; }
+  .pieza.recibo { width: calc(var(--ancho) * .6); }
+  .tres { margin-top: 96px; }
+  .arriba { text-align: left; padding-block: 18px 15px; font-size: 13px; }
+  .pieweb { margin-top: 40px; }
+  .pieweb .legal, .pieweb .como { max-width: 46em; }
 }
 </style>
 </head>
 <body>
-<main>
-  <h1>¿Cuántos nueves tiene Renfe?</h1>
-  <p class="lede">En software se mide la disponibilidad en nueves: 99,9 % son tres nueves. Aquí se mide Renfe con la
-  misma vara: sus servicios web y sus trenes. <span id="updated"></span></p>
-  <div id="app"><p class="how">Cargando…</p></div>
-</main>
-<script>
-// En local (uptime.py serve) el data.json se sirve al lado. En producción viene de R2.
-const PROD_DATA_URL = "https://renfe-data.borjagm1.com/data.json";  // se fija al desplegar
-const LOCAL = location.protocol === "file:" || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-const DATA_URL = LOCAL ? "data.json" : PROD_DATA_URL;
-const REFRESH_MS = 5 * 60 * 1000;
+<div id="app"><p class="col err">Cargando la última medición…</p></div>
+<script type="module">
+import * as c from "./common.js";
+import * as b from "./billete.js";
 
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;",
-  '"': "&quot;", "'": "&#39;" })[c]);
-const madrid = (ts, opts) => new Date(ts * 1000).toLocaleString("es-ES", { timeZone: "Europe/Madrid", ...opts });
-const hhmm = (ts) => madrid(ts, { hour: "2-digit", minute: "2-digit" });
+const app = document.getElementById("app");
+const e = c.esc, hard = b.hard;
+const secs = (ms) => (ms === null || ms === undefined ? "—" : `${c.nf(ms / 1000, 1)} s`);
+const MARCAS = ["*", "†", "‡", "§", "¶", "‖"];                       // el orden clásico de las llamadas
+// La paleta. Por defecto, la de color por servicio; las otras tres (historica, 1969, contemporanea) se ven con
+// ?paleta=.
+const LOCAL = c.LOCAL;
+const K = b.usaPaleta(new URLSearchParams(location.search).get("paleta"));
+{ const r = document.documentElement.style;
+  r.setProperty("--mostrador", K.mostrador); r.setProperty("--sombra", K.sombra); r.setProperty("--claro", K.claro); r.setProperty("--medio", K.medio); r.setProperty("--tinta", K.tinta);
+  document.querySelector('meta[name="theme-color"]').content = K.mostrador;
+  const g = b.tipos().pagina;
+  r.setProperty("--f-titulo", g.titulo[0]); r.setProperty("--p-titulo", g.titulo[1]); r.setProperty("--f-texto", g.texto[0]); r.setProperty("--p-texto", g.texto[1]); r.setProperty("--e-texto", g.texto[2]);
+  r.setProperty("--f-rotulo", g.rotulo[0]); r.setProperty("--p-rotulo", g.rotulo[1]); r.setProperty("--e-rotulo", g.rotulo[2]); r.setProperty("--t-rotulo", g.rotulo[3]);
+  r.setProperty("--f-serie", g.serie[0]); r.setProperty("--e-tabla", g.tabla); r.setProperty("--col", g.col); }
+const ORD = { tercera: "tercera", segunda: "segunda", primera: "primera" };
+let L = null, CERC = null, textoParte = null, estrenado = false, alDorso = false;
 
-function pct(p, digits = 2) {
-  if (p === null || p === undefined) return "—";
-  let text = (p * 100).toFixed(digits);
-  if (digits) text = text.replace(/\.?0+$/, "");
-  return text.replace(".", ",") + " %";
+// El billete grande, de pie (el tumbado queda para la imagen de compartir, og.png). Solo se pica al cargar, una vez.
+function pintaBillete() {
+  const marco = document.getElementById("marco");
+  if (!marco || !L) return;
+  const tc = L.tc;
+  const label = `Billete número ${L.serie}. ¿Cuántos nueves tiene Renfe? ${L.shown === null ? "Sin cifra" : `${c.nf(L.shown)} nueves`}.`
+    + (L.clase ? ` ${b.CLASES[L.clase].ord} clase.` : "") + (tc && tc.nines !== null ? ` Cien casillas, ${100 - tc.onTimeOf100} picadas.` : "") + ` ${L.validos[0]}. No es de Renfe; no válido para viajar.`;
+  marco.innerHTML = b.svg(b.planoVertical(L), { pica: !estrenado && !L.stale, cls: estrenado ? "" : "pica", label });
+  // Red de seguridad: pase lo que pase con la animación (pestaña en segundo plano, navegador raro), al cabo de
+  // 1,2 s no queda ninguna tapa. Un billete con menos agujeros de los medidos sería mentir.
+  if (!estrenado) setTimeout(() => document.querySelector("#marco svg.pica")?.classList.remove("pica"), 1200);
+  estrenado = true;
 }
 
-function nines(p) {  // 99 % son 2 nueves, 99,9 % son 3, 50 % son 0,3
-  if (p === null || p === undefined) return "—";
-  if (p >= 1) return "ningún fallo medido";
-  return (-Math.log10(1 - p)).toFixed(1).replace(".", ",") + " nueves";
-}
-
-function bars(hourly, good, warn, suffix = "") {
-  const cells = hourly.values.map((p, i) => {
-    const level = p === null ? "none" : p >= good ? "good" : p >= warn ? "warn" : "bad";
-    const label = `${madrid(hourly.start + i * 3600, { day: "2-digit", month: "2-digit", hour: "2-digit" })}:00 · ${pct(p, 1)}${suffix}`;
-    return `<span class="bar ${level}" title="${esc(label)}"></span>`;
-  }).join("");
-  return `<div class="bars">${cells}</div><div class="axis"><span>hace ${hourly.values.length} h</span><span>ahora</span></div>`;
+// Cómo se llama cada web en los cuadros, y qué contestó, dicho en castellano llano (el medidor publica el dato
+// crudo: «carga», «23 trenes Madrid → Barcelona el 25/01», «436 trenes en el feed»).
+const NOMBRE = { web: "Web renfe.com", search: "Buscador de billetes", legacy: "Venta antigua", live: "Mapa de trenes", gtfs: "Horarios", cercanias: "Cercanías en directo" };
+const MES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+function llano(s) {
+  const t = s.now?.detail ?? "";
+  if (!s.now) return "Sin dato.";
+  if (!s.now.ok) { const m = t.match(/HTTP (\d{3})/); return m ? `Devolvió un error ${m[1]}.` : /cola/i.test(t) ? "Mandó a la cola virtual." : /tiempo|timeout/i.test(t) ? "No contestó a tiempo." : "No contestó bien."; }
+  const n = t.match(/(\d+)/)?.[1];
+  switch (s.key) {
+    case "web": case "legacy": return "La portada carga.";
+    case "search": { const m = t.match(/(\d+) trenes .* el (\d{1,2})\/(\d{1,2})/); return m && MES[+m[3] - 1] ? `Encuentra ${m[1]} trenes de Madrid a Barcelona para el ${+m[2]} de ${MES[+m[3] - 1]}.` : "Devuelve trenes."; }
+    case "live": return n ? `Enseña ${n} trenes.` : "Responde.";
+    case "gtfs": { const m = t.match(/(\d{1,2}:\d{2})/); return m ? `Renovados a las ${m[1]}.` : "Publicados."; }
+    case "cercanias": return n ? `Publica ${n} trenes.` : "Se actualiza.";
+    default: return e(t);
+  }
 }
 
 function render(d) {
-  const generated = Date.parse(d.generated_at) / 1000;
-  const age = Date.now() / 1000 - generated;
-  document.getElementById("updated").textContent =
-    `Actualizado el ${madrid(generated, { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${hhmm(generated)}.`;
-  const stale = age > 3 * d.interval_s
-    ? `<p class="alert">Estos datos llevan ${Math.round(age / 60)} min sin actualizarse: el medidor está parado,
-       no Renfe. Las cifras de abajo son de entonces.</p>` : "";
-  const ld = d.trains.find((t) => t.kind === "ld");
+  L = b.lectura(d);
+  const { tc, wc, stale, alert, night, at, down, total, serie } = L;
+  const mins = Math.round(d.interval_s / 60), n24 = c.rondasDia(d), { hoy, delDia } = L;
+  textoParte = b.parte(L);
+  document.title = L.shown === null ? "¿Cuántos nueves tiene Renfe?" : `¿Cuántos nueves tiene Renfe? ${c.nf(L.shown)}`;
+  b.favicon(tc ? Math.min(1, tc.nines ?? 1) : 0, L.stock);
+  document.documentElement.style.setProperty("--boton", K.carton[L.stock]);
 
-  const services = d.services.map((s) => {
-    const state = !s.now ? "none" : s.now.ok ? "up" : "down";
-    const label = { none: "sin datos", up: "funciona", down: "caído" }[state];
-    const latency = s.latency_ms === null ? "—" : (s.latency_ms / 1000).toFixed(1).replace(".", ",") + " s";
-    return `<tr>
-      <td><div class="svc">${esc(s.name)}</div><div class="how">${esc(s.how)}</div></td>
-      <td class="state"><span class="pill ${state}">${label}</span> <span class="how">${esc(s.now?.detail)}</span></td>
-      <td class="num" data-label="24 h"><div>${pct(s.uptime["24h"])}<div class="how">${nines(s.uptime["24h"])}</div></div></td>
-      <td class="num" data-label="3 días"><div>${pct(s.uptime["72h"])}<div class="how">${nines(s.uptime["72h"])}</div></div></td>
-      <td class="num" data-label="Respuesta"><span>${latency}</span></td>
-      <td>${bars(s.hourly, 0.999, 0.9)}</td>
-    </tr>`;
-  }).join("");
-
-  const trains = d.trains.map((t) => {
-    const worst = t.worst_24h
-      ? `${t.worst_24h.delay} min · tren ${esc(t.worst_24h.train)}${t.worst_24h.route ? ` (${esc(t.worst_24h.route)})` : ""}, a las ${hhmm(t.worst_24h.ts)}`
-      : "—";
-    const now = t.now ? `${pct(t.now.punctual, 0)} (${t.now.n} trenes)` : "—";
-    const canceled = t.canceled ? `<div><b>${pct(t.canceled["24h"])}</b> cancelados en 24 h</div>` : "";
-    return `<section class="card">
-      <h3>${esc(t.title)}</h3>
-      <div class="big">${pct(t.punctual["24h"], 1)}</div>
-      <div class="sub">puntuales en 24 h · <b>${nines(t.punctual["24h"])}</b></div>
-      <div class="facts">
-        <div><b>${now}</b> ahora</div>
-        <div><b>${pct(t.punctual["72h"], 1)}</b> en 3 días</div>
-        ${canceled}
-        <div>Peor retraso en 24 h: <b>${worst}</b></div>
-      </div>
-      ${bars(t.hourly, 0.9, 0.6, " puntuales")}
-      <p class="how">${esc(t.note)} Cada tren cuenta una vez por ronda mientras circula: es puntualidad por tiempo
-      en circulación, como el uptime de un servicio.</p>
-    </section>`;
-  }).join("");
-
-  const since = d.first_ts ? madrid(d.first_ts, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
-  document.getElementById("app").innerHTML = `${stale}
-    <div class="hero">
-      <section class="card"><h3>Servicios web, todos a la vez</h3>
-        <div class="big">${pct(d.all_up["24h"])}</div>
-        <div class="sub">de las rondas de las últimas 24 h con todo funcionando · <b>${nines(d.all_up["24h"])}</b></div>
-      </section>
-      <section class="card"><h3>Trenes de larga distancia</h3>
-        <div class="big">${pct(ld?.punctual["24h"], 1)}</div>
-        <div class="sub">del tiempo en circulación a 5 min o menos de su hora · <b>${nines(ld?.punctual["24h"])}</b></div>
-      </section>
-    </div>
-    <h2>Servicios web</h2>
-    <table>
-      <tr class="head"><th>Servicio</th><th>Ahora</th><th>24 h</th><th>3 días</th><th>Respuesta</th><th>Por hora</th></tr>
-      ${services}
-    </table>
-    <h2>Trenes</h2>
-    <div class="trains">${trains}</div>
-    <footer>
-      <p>Cómo se mide. ${d.rounds} rondas desde el ${since}, una cada ${d.interval_s / 60} min. Se guardan los
-      últimos ${d.retention_h / 24} días.</p>
-      <ul>
-        <li>Cada ronda prueba cada servicio una vez. Si una petición no contesta en ${d.timeout_s} s, la comprobación
-        entera no acaba en ${d.check_deadline_s} s (reintentos incluidos), da un error o devuelve otra cosa, cuenta
-        como caído en esa ronda.</li>
-        <li>Antes de cada ronda se comprueba que el medidor tiene internet. Si no, la ronda no cuenta: el fallo es
-        nuestro.</li>
-        <li>El retraso es el último que Renfe publica. Un tren parado conserva su último retraso, así que la
-        puntualidad real puede ser algo peor. Los trenes que el mapa deja colgados horas después se descartan.</li>
-        <li>De noche el mapa de larga distancia está vacío: no hay trenes que medir, y el mapa cuenta como
-        funcionando si responde.</li>
-        <li>Son endpoints públicos pero no oficiales: si Renfe los cambia, saldrá como caído hasta que se arregle.
-        La búsqueda y el mapa se hacen con <a href="https://github.com/luisgonzaleznf/renfe-cli">Renfe CLI</a>, con
-        sus reintentos: cuentan como caídos si fallan también tras ellos.</li>
-      </ul>
-    </footer>`;
-}
-
-async function load() {
-  try {
-    const res = await fetch(DATA_URL, { cache: "no-cache" });  // revalida con ETag, sin ?t= que rompa la caché
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    render(await res.json());
-  } catch (err) {
-    if (!document.querySelector(".hero")) {
-      document.getElementById("app").innerHTML = `<p class="alert">No se han podido cargar los datos (${esc(err.message)}).</p>`;
-    }
+  // ── Lo de «ahora». El cartón ya se entera (casilla picada, esquina cortada); aquí va lo que no cabe en él.
+  //    En escritorio el talón ya dice qué falla y cuántas veces: no se repite. ──
+  let aviso = "";
+  if (stale) {
+    aviso = `<div class="aviso" role="status"><p class="t">Billete caducado: el medidor está parado desde las ${at} del ${c.dayMonth(L.to)}.</p>
+      <p class="s">Es lo último que midió. De cómo está Renfe ahora, esta página no sabe nada.</p></div>`;
+  } else if (alert) {
+    const one = down.length === 1;
+    const fails = (s) => Math.max(1, s.day.n - s.day.ok);
+    const always = down.filter((s) => s.day.n > 0 && s.day.ok === 0);
+    const head = down.length === total ? `A las ${at} nos han fallado las ${b.word(total)} webs.`
+      : `A las ${at} nos ${one ? "ha" : "han"} fallado ${e(b.list(down.map(b.frase)))}.`;
+    const counts = one && !always.length && fails(down[0]) > 1 ? `Hoy lleva ${b.int(fails(down[0]))} fallos en ${b.int(down[0].day.n)} comprobaciones. ` : "";
+    const viaCli = down.some((s) => s.key === "search" || s.key === "live") ? " y a través de Renfe CLI" : "";
+    const det = one ? ` ${llano(down[0])}` : "";
+    // En el móvil el cartón solo dice «FALLA: BUSCADOR», así que el aviso lo cuenta entero. En escritorio el
+    // talón ya dice qué falla y cuántas veces: el aviso solo añade lo que el talón no dice.
+    const movil = always.length ? "No ha contestado bien ni una vez: puede que lo roto sea nuestro medidor y que a ti te funcione."
+      : `${counts}Medimos desde un solo sitio${viaCli}, así que puede que a ti te funcione.`;
+    const pc = always.length ? ["Puede que lo roto sea nuestro medidor.", "No ha contestado bien ni una vez; quizá a ti te funcione."]
+      : ["Puede que a ti te funcione.", `Medimos desde un solo sitio${viaCli}.`];
+    aviso = `<div class="aviso" role="status"><p class="t"><span class="movil">${head}</span><span class="pc">${pc[0]}</span></p>
+      <p class="s"><span class="movil">${movil}</span><span class="pc">${pc[1]}</span>${det}</p></div>`;
   }
+
+  // ── La cartela del billete: el dato dicho en llano (y, si sale de los datos, el remate), y debajo lo justo
+  //    para leerlo: qué trenes, desde cuándo, qué es «en hora» y qué es un nueve. ──
+  let lede = "", sub = "";
+  const cuando = stale ? "Cuando se paró el medidor" : hoy ? "Hoy" : "Ayer";
+  const punch = stale || !tc ? "" : L.clase === "primera" ? "Hoy no hay chiste." : tc.belowOneNine ? b.remate(tc) : "";
+  if (!tc) lede = `Hoy todavía no han circulado bastantes trenes de ${b.LMD} para dar una cifra.`;
+  else {
+    const on = tc.onTimeOf100;
+    lede = tc.nines === null ? `${cuando}, todos los trenes que vimos iban en hora.`
+      : `${cuando}, de cada 100 trenes, ${on} ${on === 1 ? "iba" : "iban"} en hora.`;
+    if (punch) lede += ` <span class="remate">${punch}</span>`;
+    const cifra = c.nf(L.shown), CLASE = { tercera: "Menos de un nueve: billete de tercera.", segunda: "Entre uno y dos nueves: billete de segunda.", primera: "Dos nueves o más: billete de primera." };
+    const vistos = stale ? "habíamos visto ese día" : hoy ? "hemos visto hoy" : "vimos ayer";
+    sub = `<p class="sub">Son los ${b.int(tc.n)} trenes de ${b.LMD}, AVE incluido, que ${vistos} en el mapa de Renfe. Cada tren cuenta una vez, con el retraso de la última vez que lo vimos: en hora es con ${b.PUNTUAL_MIN} minutos o menos.</p>
+      <p class="sub">En software se presume de nueves: un servicio que funciona el 99,9 % del tiempo tiene tres; con el 90 %, uno. Aquí funcionar es ir en hora${tc.nines === null ? "." : `, y el ${c.pct(tc.p)} da ${cifra} ${cifra === "1" ? "nueve" : "nueves"}. ${CLASE[L.clase]}`}</p>`;
+  }
+  const kicker = stale ? `Última medición: ${at} del ${c.dayMonth(L.to)}` : hoy ? `Última medición: ${at} · una cada ${mins} minutos`
+    : `Billete de ayer, ${c.dayMonth(L.hasta)} · hoy aún no han salido bastantes trenes`;
+  const nota = night ? `<p class="nota">Ahora mismo no hay ninguno en el mapa; de noche es lo normal. En hora van 0 de 0, y eso no lo contamos como un 100\u00a0%.</p>` : "";
+
+  // Solo en la paleta de color por servicio: por qué el billete grande lleva dos colores.
+  const notaServicio = !K.servicio ? "" : `<p class="nota">Aquí el color dice el servicio, no la clase: morado, larga y media distancia; la franja azul, alta velocidad. El mapa de Renfe los publica juntos y el medidor no los separa, así que el billete lleva los dos. La clase va solo impresa.</p>`;
+
+  // ── El billete de Cercanías: solo información, sin perforar, con la gramática que toca en cada paleta ──
+  const cer = d._cer, pc = d.day.enough ? cer?.day?.punctual : null;
+  CERC = null;
+  let piezaCerc = "", cartelaCerc = "";
+  if (pc !== null && pc !== undefined) {
+    const n = c.nines(pc), on = Math.round(pc * 100), cancelados = cer.day.canceled !== null && cer.day.n ? c.pct(cer.day.canceled / cer.day.n) : null;
+    CERC = { serie, stock: stale ? "gris" : b.claseDe(n), clase: b.CLASES[b.claseDe(n)].ord, valido: b.fechaSello(L.hasta).replace(/ /g, ""), hasta: L.hat, on, stale,
+      nueves: n === null ? null : c.nf(b.cifraDe(n)), cifra: n === null ? "100 DE 100" : `${c.nf(b.cifraDe(n))} NUEVES`, cancelados, fecha: L.fechaHora };
+    const label = `Billete de Cercanías número ${serie}: ${n === null ? "todos en hora" : `${c.nf(b.cifraDe(n))} nueves`}, ${b.CLASES[b.claseDe(n)].ord} clase. De cada 100 trenes ${delDia}, ${on} iban en hora.${cancelados ? ` Cancelados: ${cancelados}.` : ""} Válido ${b.fechaSello(L.to)} hasta las ${at}. No es de Renfe; no válido para viajar.`;
+    piezaCerc = `<figure class="pieza cerc">${b.svg(b.planoCercaniasDe(CERC), { label })}</figure>`;
+    // Su cartela: el mismo dato, en llano, y por qué va en billete aparte.
+    cartelaCerc = `<div class="cartela chica">
+      <h2 class="tit">${n === null ? `En Cercanías, todos los trenes ${delDia} iban en hora.` : `En Cercanías, de cada 100 trenes ${delDia}, ${on} ${on === 1 ? "iba" : "iban"} en hora.`}</h2>
+      <p class="sub">${hard(`${n === null ? "" : `Son ${CERC.nueves} ${CERC.nueves === "1" ? "nueve" : "nueves"}. `}Renfe publica Cercanías aparte${cancelados ? `, y solo ahí cuenta los trenes cancelados: el ${cancelados}` : ""}.`)}</p>
+      <p class="actos"><button type="button" class="disc" data-act="guardar-cercanias">Guardar este billete</button></p></div>`;
+  }
+  // ── El justificante de la máquina: las seis webs ──
+  const piezaRecibo = `<figure class="pieza recibo">${b.svg(b.planoRecibo(L), { label: `Justificante número ${serie}: las seis webs de Renfe.${wc ? ` ${b.int(wc.n)} comprobaciones, ${b.int(wc.ok)} bien.` : ""}${down.length ? ` Falla ${e(b.list(down.map(b.frase)))}.` : ""} No es de Renfe; no válido para viajar.` })}</figure>`;
+
+
+  // ── Cuadro 1: los trenes, con sus llamadas ──
+  const trains = [d._ld, d._cer].filter(Boolean);
+  let k = 0; const notas = [];
+  const llama = (txt) => { const m = MARCAS[k++ % MARCAS.length]; notas.push(`<li><span class="m">${m}</span><span>${txt}</span></li>`); return `<span class="ll">${m}</span>`; };
+  const col = (f, cls = "t") => trains.map((t, i) => `<span class="${cls}">${f(t, i)}</span>`).join("");
+  const none = (s) => `<span class="none">${s}</span>`;
+  // Lo del día: la proporción de trenes en hora de cada servicio (sin bastantes trenes todavía, no hay cifra).
+  const pd = (t) => (d.day.enough ? t.day?.punctual ?? null : null);
+  const nv = (t) => c.nines(pd(t));
+  const llVentana = llama(`${hoy ? "Cuenta desde la primera ronda del día" : `Es el billete de ayer: hoy aún no han circulado ${d.day.min_trains} trenes`}. Los trenes de cada día se guardan: de ahí saldrá cómo cambian los retrasos.`);
+  const llNueves = tc && tc.nines !== null ? llama(`${c.nf(L.shown)} = −log₁₀(1 − ${c.nf(tc.p, 3)}). No es una errata. Un nueve es el 90 %; dos, el 99 %; tres, el 99,9 %.`) : "";
+  // El margen sale de los trenes del día: con muy pocos no dice nada, y entonces no se da. «Ni por arriba»
+  // solo se afirma si el extremo de arriba de verdad queda bajo el nueve.
+  const MIN_MARGEN = 30;
+  const margenDe = (t) => (t.day && t.day.n >= MIN_MARGEN && nv(t) !== null ? b.margen(pd(t), t.day.n) : null);
+  const hayMargen = trains.some(margenDe), mLd = d._ld ? margenDe(d._ld) : null;
+  const llMargen = hayMargen ? llama(`Intervalo al 95 % con los trenes del día (${trains.filter(margenDe).map((t) => b.int(t.day.n)).join(" y ")}). Con menos de ${MIN_MARGEN} no lo damos.${mLd && mLd[1] < 1 ? " Ni por arriba llegan al primero." : ""}`) : "";
+  const llVeces = llama("Cada tren y trayecto cuenta una vez al día, con el retraso de la última vez que lo vimos en el mapa. Es retraso en ruta, no a la llegada: después puede recuperar o perder.");
+  const llCancel = llama("Solo Cercanías publica cancelaciones. Un tren cancelado cuenta como no puntual.");
+  // El guiño: lo único en lo que salen todos los nueves, y por qué no podía salir otra cosa.
+  const llVia = llama("Por fin, todos los nueves. El mapa solo enseña trenes que están en ruta, así que tampoco podía salir otra cosa.");
+  const mg = (t) => { const m = margenDe(t); return m ? `${c.nf(m[0], 2)}–${c.nf(m[1], 2)}` : none("pocos trenes"); };
+  const dice = (t, lim) => { const n = nv(t); return n === null || n >= lim ? (stale ? "llegaba" : "llega") : (stale ? "no llegaba" : "no llega"); };
+  const llega = (lim) => (t, i) => (i > 0 && dice(trains[i - 1], lim) === dice(t, lim) ? `<span aria-label="ídem">»</span>` : `<i>${dice(t, lim)}</i>`);
+  const fila = (cls, nm, f, o = {}) => `<div class="r ${cls}${o.dos ? " multi" : ""}"><span class="p${o.dos ? " dos" : ""}"><span class="nm">${nm}</span></span>${col(f, o.gr ? "t gr" : "t")}</div>`;
+  const cuadro1 = !trains.length ? "" : `<section class="cuadro">
+    <p class="ccab ley">Cuadro 1 · Trenes ${delDia} · ${c.range(L.from, L.hasta)}${llVentana}</p>
+    <div class="tt" role="table" aria-label="Trenes en ruta">
+      <div class="r hd"><span class="p">En hora: ${b.PUNTUAL_MIN} min de retraso o menos</span>${trains.map((t) => `<span class="t"><span>${t.kind === "ld" ? "Larga y media dist." : e(t.title)}</span></span>`).join("")}</div>
+      ${fila("pri", `<b>Nueves</b>${llNueves}`, (t) => { const n = nv(t); return n === null ? none("—") : `<b>${c.nf(b.cifraDe(n))}</b>`; }, { gr: true })}
+      ${hayMargen ? fila("", `Margen${llMargen}`, mg) : ""}
+      ${fila("", `En hora, de cada 100${llVeces}`, (t) => (pd(t) === null ? "—" : `<b>${Math.round(pd(t) * 100)}</b>`))}
+      ${fila("", "Trenes contados", (t) => (t.day ? b.int(t.day.n) : "—"))}
+      ${fila("", `En hora ${stale ? `a las ${at}` : `ahora, ${at}`}`, (t) => (t.now ? `${b.int(t.now.punctual * t.now.n)} de ${b.int(t.now.n)}` : none("sin trenes")))}
+      ${fila("", `Cancelados${llCancel}`, (t) => (t.day && t.day.canceled !== null && t.day.n ? c.pct(t.day.canceled / t.day.n) : none("sin dato")))}
+      ${fila("", "Peor retraso", (t) => (t.day?.worst ? `${b.int(t.day.worst.delay)} min` : "—"))}
+      ${fila("raya", "<b>Primer nueve</b>, el\u00a090\u00a0%", llega(1))}
+      ${fila("", "<b>Segundo nueve</b>, el\u00a099\u00a0%", llega(2))}
+      ${fila("", "<b>Tercer nueve</b>, el\u00a099,9\u00a0%", llega(3))}
+      ${fila("raya ult", `Sin descarrilar, de cada\u00a0100${llVia}`, () => "<b>100</b>", { dos: true })}
+    </div>
+    <details class="plega"><summary class="ley">Notas</summary><ol class="notas">${notas.join("")}</ol></details>
+  </section>`;
+
+  // ── Cuadro 2: las webs ──
+  const notas2 = []; let k2 = 0;
+  const llama2 = (txt) => { const m = MARCAS[k2++ % MARCAS.length]; notas2.push(`<li><span class="m">${m}</span><span>${txt}</span></li>`); return `<span class="ll">${m}</span>`; };
+  const lb = wc ? c.lowerBound(wc.p, wc.n) : null;
+  const llBien = wc ? llama2(wc.perfect
+    ? `${b.int(wc.ok)} de ${b.int(wc.n)} no demuestra un 100 %. Con tan pocas comprobaciones solo se puede asegurar, al 95 %, que las seis funcionan a la vez el ${c.pct(lb)} de las veces: ${c.nf(c.nines(lb))} nueves.`
+    : `Las seis a la vez: ${b.int(wc.ok)} de ${b.int(wc.n)} rondas, ${c.nf(wc.nines)} nueves medidos.`) : "";
+  const llTarda = llama2(`Lo que suele tardar en contestar (la mediana). Sin respuesta en ${d.timeout_s} segundos, fallo. No probamos el pago.`);
+  const answer = stale ? `A las ${at} del ${c.dayMonth(L.to)} el medidor se paró. No sabemos cómo está Renfe ahora.`
+    : down.length ? `A las ${at} nos ${down.length > 1 ? "fallaron" : "falló"} ${e(b.list(down.map(b.frase)))}. Medimos desde un solo sitio: puede que a ti te funcione.`
+    : `A las ${at} nos respondieron bien las ${b.word(total)}. Igual esta vez eres tú. O es el pago, que no lo probamos.`;
+  const dia = hoy ? "hoy" : "ayer";
+  const rondas = !wc ? "" : wc.perfect ? ` En las ${b.int(wc.n)} comprobaciones de ${dia} han respondido siempre las ${b.word(total)}.`
+    : ` De ${b.int(wc.n)} comprobaciones de ${dia}, en ${b.int(wc.ok)} respondieron las ${b.word(total)} a la vez.`;
+  const cartelaRecibo = `<div class="cartela chica">
+      <h2 class="tit">¿Es Renfe o soy yo?</h2>
+      <p class="sub">${hard(answer)}</p>
+      ${stale ? "" : `<p class="sub">${hard(`Cada ${mins} minutos probamos desde fuera las ${b.word(total)} webs de Renfe.${rondas}`)}</p>`}
+      <p class="actos"><button type="button" class="disc" data-act="guardar-recibo">Guardar el justificante</button></p></div>`;
+  const cuadro2 = `<section class="cuadro">
+    <p class="ccab ley">Cuadro 2 · Las ${b.word(total)} webs, probadas desde fuera cada ${mins} minutos</p>
+    <div class="tt" role="table" aria-label="Webs de Renfe">
+      <div class="r hd"><span class="p">Servicio</span><span class="t"><span>Bien${llBien}</span></span><span class="t"><span>Tarda${llTarda}</span></span></div>
+      ${d.services.map((s, i) => { const ok = s.day?.n ? s.day.ok : null, mal = s.now && !s.now.ok;
+        return `<div class="r${i === 0 ? " pri" : ""}"><span class="p"><span class="nm"><b>${e(NOMBRE[s.key] ?? s.name)}</b></span></span>
+        <span class="t">${ok === null ? "—" : `${b.int(ok)} de ${b.int(s.day.n)}`}</span><span class="t">${mal ? `<i>${stale ? "fallaba" : "falla"}</i>` : secs(s.latency_ms)}</span></div>
+        <div class="r det${i === d.services.length - 1 ? " ult" : ""}"><span class="p">${llano(s)}</span><span class="t"></span><span class="t"></span></div>`; }).join("")}
+    </div>
+    <details class="plega"><summary class="ley">Notas</summary><ol class="notas">${notas2.join("")}</ol></details>
+  </section>`;
+
+  app.innerHTML = `
+  <div class="col">
+    <header class="arriba ley">${b.AVISO}</header>
+    <main>
+      <h1 class="vh">¿Cuántos nueves tiene Renfe?</h1>
+      <div class="mesa">
+        <div class="carta" id="carta">
+          <div class="marco" id="marco"></div>
+          <section class="dorso" id="dorso" hidden style="--carton:${K.carton[L.stock]};--ink2:${b.tinta2(K.carton[L.stock])}">
+            <p class="dcab"><span class="ley">Los datos de este billete${L.clase ? ` · ${b.CLASES[L.clase].ord} clase` : ""}</span><span class="num">${e(serie)}</span></p>
+            ${cuadro1}${cuadro2}
+            <details class="plega"><summary class="ley">Letra pequeña</summary><div class="cond">
+            <p><b>Cómo se mide.</b> Cada ${mins} minutos, desde fuera, probamos las ${b.word(total)} webs de Renfe y miramos su mapa de trenes. Cada tren y trayecto cuenta una vez al día, con el retraso de la última vez que lo vimos: va en hora con ${b.PUNTUAL_MIN} minutos o menos. Es retraso en ruta, no a la llegada. Un tren que cruza la medianoche cuenta en el día en que salió, y de madrugada, hasta que han circulado ${d.day.min_trains} trenes, se enseña el billete de ayer. Alta velocidad, larga y media distancia van en el mismo billete: el mapa de Renfe trae un código de producto por tren, pero no sabemos a qué servicio corresponde cada uno, así que no los separamos.</p>
+            <p><b>Qué es el billete.</b> Uno por ronda, numerado: el ${e(serie)} es el de la ronda ${b.int(L.n)}. Las cien casillas son una proporción redondeada, no cien trenes ni su orden. El descentrado de cada agujero y el baile de la numeradora salen del número de serie: no hay dos billetes iguales. No es de Renfe ni vale para viajar.</p>
+            ${K.servicio ? `<p><b>Los colores, en esta variante.</b> Aquí el color no dice la clase sino el servicio, como en la identidad de Renfe de 2026: morado para larga y media distancia, azul para alta velocidad, blanco y rojo para Cercanías. El morado es el de su logotipo de 2026 (#5B064B, según Wikimedia Commons); el azul y el rojo son aproximados. La clase por nueves, que es cosa nuestra, va solo impresa. Las webs van en gris, sin servicio.</p>` : `<p><b>Las clases y los colores.</b> En los billetes Edmondson el color del cartón decía la clase: amarillo para la primera, verde para la segunda y siena para la tercera; los complementarios, en azul. Eso es historia (Consorcio de Transportes de Madrid, «La Historia del Billete de Transporte en Madrid 1847-2015», p. 36). Repartir las clases por nueves es cosa nuestra: tercera, menos de un nueve; segunda, de uno a dos; primera, de dos en adelante. Las webs van en azul, sin clase.</p>`}
+          </div></details>
+            <p><button type="button" class="disc" data-act="vuelta">Volver al billete</button></p>
+          </section>
+        </div>
+        <div class="cartela">
+          ${aviso}
+          <div class="dice">${aviso ? "" : `<p class="ley kicker">${kicker}</p>`}<p class="lede">${lede}</p>${hard(sub)}${nota}</div>
+          <p class="actos"><button type="button" class="pral" data-act="guardar-billete">Guardar el billete</button><span class="mas"><button type="button" class="disc" data-act="vuelta">Ver los datos al dorso</button><button type="button" class="disc" data-act="copiar"${textoParte ? "" : " disabled"}>Copiar el resumen</button></span><span class="vh" role="status" id="dicho"></span></p>
+        </div>
+      </div>
+      ${piezaCerc ? `<section class="vitrina">${piezaCerc}${cartelaCerc}</section>` : ""}
+      <section class="vitrina">${piezaRecibo}${cartelaRecibo}</section>
+      <p class="tres"><button type="button" class="disc" data-act="guardar-tres">Guardar las tres piezas en una imagen</button></p>
+    </main>
+    <footer class="pieweb">
+      <p class="como">Los trenes se leen del mapa de Renfe con <a href="${c.CLI}">Renfe CLI</a>. Las cuentas, las notas y la letra pequeña están al dorso del billete.</p>
+      <p class="enl"><span>${c.SITE}</span><a href="${c.REPO}">Código y datos en GitHub</a></p>
+      <p class="legal"><b>${b.AVISO}</b> «Renfe» y «Cercanías» son marcas de sus titulares; aquí solo se nombran para decir qué se mide. ${K.id === "renfe-actual" ? "Los colores recuerdan a los de sus servicios para que se reconozca qué se mide; no usa sus logotipos, su tipografía ni sus billetes reales." : "Esta página no usa sus logotipos ni sus colores."} El billete es un dibujo: no es un título de transporte ni vale para viajar.</p>
+    </footer>
+  </div>`;
+  alDorso = false;
+  pintaBillete();
 }
-load();
-setInterval(load, REFRESH_MS);
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// ── Guardar: los mismos planos, pintados en canvas. Cada pieza por separado y «los tres» juntos, sobre el
+//    mostrador. Todas llevan dentro el aviso. Con compartir nativo en el móvil; si no, descarga. ──
+const LAMINAS = {
+  billete: () => [b.imagen(L, true), "billete"],
+  cercanias: () => [b.lamina([{ P: b.planoCercaniasDe(CERC), s: 5 }], { min: 1080 }), "cercanias"],
+  recibo: () => [b.lamina([{ P: b.planoRecibo(L), s: 4.4 }], { min: 900 }), "justificante"],
+  tres: () => [b.lamina([{ P: b.planoVertical(L), s: 2.3 }, ...(CERC ? [{ P: b.planoCercaniasDe(CERC), s: 2.9, dy: 40 }] : []), { P: b.planoRecibo(L), s: 2.5, dy: 120 }], { cuerpo: 36 }), "los-tres"],
+};
+async function guardar(cual) {
+  const [cv, nombre] = LAMINAS[cual]();
+  const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
+  const name = `${nombre}-renfe-${L.serie}.png`;
+  const file = new File([blob], name, { type: "image/png" });
+  if (matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: "¿Cuántos nueves tiene Renfe?", text: textoParte ?? c.SITE }); return "Compartido"; }
+    catch (err) { if (err.name === "AbortError") return null; }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  return "Guardado";
+}
+app.addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("[data-act]");
+  if (!btn || !L) return;
+  if (btn.dataset.act === "vuelta") return daLaVuelta();
+  const antes = btn.textContent; let dicho = null;
+  try {
+    if (btn.dataset.act.startsWith("guardar-")) dicho = await guardar(btn.dataset.act.slice(8));
+    else if (textoParte) { await navigator.clipboard.writeText(textoParte); dicho = "Copiado"; }
+  } catch { dicho = "No se pudo"; }
+  if (!dicho) return;
+  btn.textContent = dicho; document.getElementById("dicho").textContent = dicho;
+  setTimeout(() => { btn.textContent = antes; }, 1800);
+});
+
+// Dar la vuelta al billete: media vuelta hasta ponerlo de canto, se cambia la cara y termina de girar.
+// Como se le da la vuelta a un cartón con la mano: se levanta un poco, gira hasta ponerse de canto (ahí se cambia
+// la cara) y la otra cara termina la vuelta, se pasa un pelo y asienta. A la ida gira hacia un lado y a la vuelta
+// hacia el otro. Si el billete no está a la vista, primero se sube hasta él: el giro tiene que verse.
+let girando = false;
+const LENTO = (LOCAL && Number(new URLSearchParams(location.search).get("lento"))) || 1;   // solo en local, para mirar el giro despacio
+const acaba = (anim, ms) => Promise.race([anim.finished.catch(() => {}), new Promise((r) => setTimeout(r, ms + 200))]);
+async function daLaVuelta() {
+  const carta = document.getElementById("carta"), marco = document.getElementById("marco"), dorso = document.getElementById("dorso");
+  if (!carta || !marco || !dorso || girando) return;
+  const sale = alDorso ? dorso : marco, entra = alDorso ? marco : dorso, s = alDorso ? 1 : -1;
+  const cambia = () => {
+    alDorso = !alDorso;
+    marco.hidden = alDorso; dorso.hidden = !alDorso;
+    for (const bt of document.querySelectorAll('.cartela [data-act="vuelta"]')) bt.textContent = alDorso ? "Volver al billete" : "Ver los datos al dorso";
+  };
+  const fuera = () => { const r = carta.getBoundingClientRect(); return r.top < -8 || r.top > innerHeight * 0.45; };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { cambia(); if (fuera()) carta.scrollIntoView({ block: "start" }); return; }
+  girando = true;
+  try {
+    if (fuera()) {
+      carta.scrollIntoView({ block: "start", behavior: "smooth" });
+      await new Promise((r) => { const t = setTimeout(r, 650); addEventListener("scrollend", () => { clearTimeout(t); r(); }, { once: true }); });
+    }
+    const alto = carta.getBoundingClientRect().height;
+    // El canto no llega a los 90°: a 88° la cara que entra ya asoma un filo, y el navegador la tiene pintada
+    // entera antes de enseñarla (de canto del todo no la pinta hasta que gira, y llegaba a trozos). Tampoco se
+    // oscurece con un filtro: un filtro sobre la cara es otra capa más que pintar en cada fotograma.
+    await acaba(sale.animate([
+      { transform: "rotateY(0deg) rotateZ(0deg) scale(1)" },
+      { transform: `rotateY(${s * 24}deg) rotateZ(${s * -1}deg) scale(1.03)`, offset: 0.4 },
+      { transform: `rotateY(${s * 88}deg) rotateZ(${s * -2.2}deg) scale(1.05)` },
+    ], { duration: 300 * LENTO, easing: "cubic-bezier(.5, 0, .85, .6)", fill: "forwards" }), 300 * LENTO);
+    cambia();
+    sale.getAnimations().forEach((a) => a.cancel());
+    // El dorso es más alto que el cartón: lo de debajo baja (o sube) a la vez que termina la vuelta, sin salto.
+    const alto2 = carta.getBoundingClientRect().height;
+    if (Math.abs(alto2 - alto) > 1) carta.animate([{ height: `${alto}px` }, { height: `${alto2}px` }], { duration: 420 * LENTO, easing: "cubic-bezier(.2, .7, .2, 1)" });
+    await acaba(entra.animate([
+      { transform: `rotateY(${s * -88}deg) rotateZ(${s * 2.2}deg) scale(1.05)` },
+      { transform: `rotateY(${s * 6}deg) rotateZ(${s * -0.5}deg) scale(1.012)`, offset: 0.66 },
+      { transform: `rotateY(${s * -1.5}deg) rotateZ(0deg) scale(1.002)`, offset: 0.86 },
+      { transform: "rotateY(0deg) rotateZ(0deg) scale(1)" },
+    ], { duration: 520 * LENTO, easing: "cubic-bezier(.15, .7, .3, 1)" }), 520 * LENTO);
+  } finally { girando = false; }
+}
+
+try {
+  const d = await c.load();
+  const listas = await b.fuentesListas();
+  render(d);
+  // Si las fuentes no habían llegado, lo pintado se midió con la letra de reserva: se recompone al llegar.
+  if (!listas) b.fuentesDelTodo().then((ok) => { if (ok) render(d); });
+} catch (err) { app.innerHTML = `<p class="col err">No hemos podido leer la última medición (${e(err.message)}). El fallo es nuestro, no de Renfe.</p>`; }
 </script>
 </body>
 </html>
