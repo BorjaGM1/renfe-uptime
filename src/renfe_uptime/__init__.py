@@ -1,5 +1,5 @@
 """¿Cuántos nueves tiene Renfe? Mide cada 5 minutos si los servicios web de Renfe funcionan y cuántos trenes van en
-hora, guarda los últimos 3 días en SQLite y exporta un data.json que pinta la página de web/."""
+hora, guarda en SQLite el histórico de trenes y 30 días de comprobaciones y exporta un data.json que pinta la página de web/."""
 
 import os
 from importlib.metadata import PackageNotFoundError, version

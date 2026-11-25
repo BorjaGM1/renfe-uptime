@@ -1,6 +1,6 @@
 """renfe-uptime once | run | serve | export
 
-    once     una ronda: medir, recortar a 3 días, exportar y subir (lo que lanza el timer de systemd)
+    once     una ronda: medir, recortar las comprobaciones a 30 días, exportar y subir (lo que lanza el timer de systemd)
     run      una ronda cada 5 min
     serve    lo mismo y además sirve la página y el data.json en http://127.0.0.1:8790 (para desarrollo)
     export   solo regenera site/data.json con lo que ya hay

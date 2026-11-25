@@ -7,8 +7,9 @@ EARLIEST = 30  # minutos de adelanto a partir de los cuales el dato no es creíb
 PUNCTUAL = 5  # minutos: hasta aquí, el tren cuenta como puntual
 
 
-def long_distance_sample(board, names: dict) -> dict | None:
-    """Puntualidad de los trenes del mapa ahora (un renfe.live.Board). Se descartan los restos de horas atrás."""
+def long_distance_trains(board, names: dict) -> list[tuple[int, str, str]]:
+    """Los trenes del mapa ahora (un renfe.live.Board): (retraso en minutos, número, trayecto). Se descartan
+    los restos de horas atrás."""
     delays = []
     for train in board.trains.values():
         if train.get("delay") is None:
@@ -19,20 +20,24 @@ def long_distance_sample(board, names: dict) -> dict | None:
         origin, destination = train.get("origin"), train.get("destination")
         route = f"{names.get(origin, origin)} → {names.get(destination, destination)}"
         delays.append((train["delay"], str(train.get("number", "?")), route))
-    return summarize(delays, canceled=0)
+    return delays
 
 
-def cercanias_sample(doc) -> dict | None:
-    """Puntualidad de los trenes del feed de Cercanías ahora. Un tren cancelado cuenta como no
-    puntual en cada ronda en que siga en el feed."""
-    delays, canceled = [], 0
+def long_distance_sample(board, names: dict) -> dict | None:
+    """Puntualidad de los trenes del mapa en esta ronda."""
+    return summarize(long_distance_trains(board, names), canceled=0)
+
+
+def cercanias_trains(doc) -> tuple[list[tuple[int, str, str]], list[str]]:
+    """Los viajes del feed de Cercanías ahora: (retraso en minutos, viaje, "") y, aparte, los cancelados."""
+    delays, canceled = [], []
     for entity in doc.get("entity") or []:
         update = entity.get("tripUpdate") if isinstance(entity, dict) else None
         if not isinstance(update, dict):
             continue
         trip = update.get("trip") or {}
         if trip.get("scheduleRelationship") == "CANCELED":
-            canceled += 1
+            canceled.append(str(trip.get("tripId", "?")))
             continue
         seconds = update.get("delay")
         if not isinstance(seconds, int):
@@ -41,7 +46,14 @@ def cercanias_sample(doc) -> dict | None:
             seconds = event.get("delay")
         if isinstance(seconds, int) and not isinstance(seconds, bool):
             delays.append((-(-seconds // 60), str(trip.get("tripId", "?")), ""))  # 301 s ya son 6 min
-    return summarize(delays, canceled)
+    return delays, canceled
+
+
+def cercanias_sample(doc) -> dict | None:
+    """Puntualidad de los trenes del feed de Cercanías en esta ronda. Un tren cancelado cuenta como no
+    puntual."""
+    delays, canceled = cercanias_trains(doc)
+    return summarize(delays, len(canceled))
 
 
 def summarize(delays: list[tuple[int, str, str]], canceled: int) -> dict | None:

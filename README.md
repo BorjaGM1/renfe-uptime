@@ -7,7 +7,7 @@ Mide cada 5 minutos si los servicios web de Renfe funcionan y cuántos trenes va
 
 ```
 timer de systemd en un VPS, cada 5 min (usuario renfe-uptime, sin privilegios)
-  → renfe-uptime once: medir, guardar en SQLite, borrar lo de más de 3 días, exportar site/data.json
+  → renfe-uptime once: medir, guardar en SQLite, borrar las comprobaciones de más de 30 días (los trenes se guardan siempre), exportar site/data.json
   → PUT por la API S3 a R2, bucket renfe-uptime → https://renfe-data.borjagm1.com/data.json
 
 navegador
@@ -22,8 +22,8 @@ Las visitas no tocan el VPS ni gastan cuota de Workers: solo Pages y R2.
 | Ruta | Qué |
 |---|---|
 | `src/renfe_uptime/checks.py` | Las seis comprobaciones. La búsqueda y el mapa en tiempo real van con Renfe CLI |
-| `src/renfe_uptime/trains.py` | Puntualidad de cada ronda: larga distancia y Cercanías |
-| `src/renfe_uptime/store.py` | SQLite: guardar, recortar a 3 días y exportar `data.json` |
+| `src/renfe_uptime/trains.py` | Los trenes de cada ronda, uno a uno: larga distancia y Cercanías |
+| `src/renfe_uptime/store.py` | SQLite: guardar, recortar las comprobaciones a 30 días y exportar `data.json` |
 | `src/renfe_uptime/publish.py` | Subida a R2 con curl (el secreto va por stdin, nunca en argv) |
 | `src/renfe_uptime/cli.py` | `renfe-uptime once \| run \| serve \| export` |
 | `web/index.html` | La página. Lee `data.json`: en local, el de al lado; en producción, el de R2 |
@@ -69,9 +69,12 @@ Además, cualquier servicio cuenta como caído si una petición no contesta en 1
 acaba en 60 s (reintentos incluidos) o si da un error. Las seis comprobaciones van a la vez. Si antes de la ronda falla la
 conexión del propio medidor, la ronda no cuenta.
 
-**Trenes:** la proporción a 5 minutos de su hora o menos, contada en cada ronda mientras circulan. Es puntualidad
-por tiempo en circulación, igual que el uptime. En Cercanías, un tren cancelado cuenta como no puntual en cada ronda
-en que Renfe lo mantiene en el feed.
+**Trenes:** cada tren y trayecto cuenta una vez al día, con el retraso de la última vez que se le vio en el mapa:
+va en hora con 5 minutos o menos. Es retraso en ruta, no a la llegada. Un tren que cruza la medianoche cuenta en el
+día en que salió, y en Cercanías un tren cancelado cuenta como no puntual. `data.json` trae en `day` las cuentas del
+día que se enseña: hoy o, de madrugada, hasta que han circulado 20 trenes de larga y media distancia, ayer. También
+sigue saliendo la proporción por ronda de las últimas 24 y 72 horas (cada tren, una vez por ronda mientras circula),
+que es la que usa todavía la página de `web/`.
 
 Renfe actualiza el mapa de larga distancia cada ~15 s, Cercanías cada ~20 s y el horario una vez al día (medido
 el 24 nov 2026).
