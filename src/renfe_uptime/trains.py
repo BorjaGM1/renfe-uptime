@@ -10,7 +10,17 @@ PUNCTUAL = 5  # minutos: hasta aquí, el tren cuenta como puntual
 def long_distance_trains(board, names: dict) -> list[tuple[int, str, str]]:
     """Los trenes del mapa ahora (un renfe.live.Board): (retraso en minutos, número, trayecto). Se descartan
     los restos de horas atrás."""
-    delays = []
+    return [(train["delay"], number, route) for train, number, route in _on_map(board, names)]
+
+
+def long_distance_places(board, names: dict, provinces: dict) -> list[tuple[int, str, str, str]]:
+    """Por dónde va cada tren del mapa: (retraso, número, trayecto, provincia), una por provincia de su estación
+    anterior y de la siguiente. Entre dos provincias, cuenta en las dos."""
+    return [(train["delay"], number, route, province) for train, number, route in _on_map(board, names)
+            for province in sorted({provinces.get(train.get("previous")), provinces.get(train.get("next"))} - {None})]
+
+
+def _on_map(board, names: dict):
     for train in board.trains.values():
         if train.get("delay") is None:
             continue
@@ -18,9 +28,7 @@ def long_distance_trains(board, names: dict) -> list[tuple[int, str, str]]:
         if board.updated and expected and board.updated - expected > STALE_ENTRY:
             continue
         origin, destination = train.get("origin"), train.get("destination")
-        route = f"{names.get(origin, origin)} → {names.get(destination, destination)}"
-        delays.append((train["delay"], str(train.get("number", "?")), route))
-    return delays
+        yield train, str(train.get("number", "?")), f"{names.get(origin, origin)} → {names.get(destination, destination)}"
 
 
 def long_distance_sample(board, names: dict) -> dict | None:
@@ -31,22 +39,39 @@ def long_distance_sample(board, names: dict) -> dict | None:
 def cercanias_trains(doc) -> tuple[list[tuple[int, str, str]], list[str]]:
     """Los viajes del feed de Cercanías ahora: (retraso en minutos, viaje, "") y, aparte, los cancelados."""
     delays, canceled = [], []
+    for tid, minutes, _stop in _trips(doc):
+        if minutes is None:
+            canceled.append(tid)
+        else:
+            delays.append((minutes, tid, ""))
+    return delays, canceled
+
+
+def cercanias_places(doc, provinces: dict) -> list[tuple[int, str, str, str]]:
+    """Por dónde va cada viaje de Cercanías: (retraso, viaje, "", provincia de su próxima parada). Un viaje cuya
+    parada no está en la lista de estaciones de Renfe CLI se queda sin provincia y no entra."""
+    return [(minutes, tid, "", provinces[stop]) for tid, minutes, stop in _trips(doc)
+            if minutes is not None and provinces.get(stop)]
+
+
+def _trips(doc):
+    """(viaje, retraso en minutos o None si está cancelado, próxima parada) de cada viaje del feed con retraso."""
     for entity in doc.get("entity") or []:
         update = entity.get("tripUpdate") if isinstance(entity, dict) else None
         if not isinstance(update, dict):
             continue
         trip = update.get("trip") or {}
+        stops = update.get("stopTimeUpdate") or [{}]
+        stop = stops[0].get("stopId") if isinstance(stops[0], dict) else None
         if trip.get("scheduleRelationship") == "CANCELED":
-            canceled.append(str(trip.get("tripId", "?")))
+            yield str(trip.get("tripId", "?")), None, stop
             continue
         seconds = update.get("delay")
         if not isinstance(seconds, int):
-            stops = update.get("stopTimeUpdate") or [{}]
             event = stops[0].get("arrival") or stops[0].get("departure") or {}
             seconds = event.get("delay")
         if isinstance(seconds, int) and not isinstance(seconds, bool):
-            delays.append((-(-seconds // 60), str(trip.get("tripId", "?")), ""))  # 301 s ya son 6 min
-    return delays, canceled
+            yield str(trip.get("tripId", "?")), -(-seconds // 60), stop  # 301 s ya son 6 min
 
 
 def cercanias_sample(doc) -> dict | None:

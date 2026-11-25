@@ -105,6 +105,10 @@ def station_names() -> dict[str, str]:
     return {s.code: s.name for s in stations.bundled()}
 
 
+def station_provinces() -> dict[str, str]:
+    return {s.code: s.province for s in stations.bundled() if s.province}
+
+
 def check_web(now):
     _, url, _, body = fetch(WEB)
     not_queued(url)

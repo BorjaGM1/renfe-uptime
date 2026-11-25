@@ -29,6 +29,9 @@ create table if not exists train_days (day text not null, kind text not null, id
     route text not null, first_ts integer not null, last_ts integer not null, delay integer, worst integer,
     seen integer not null, canceled integer not null, primary key (day, kind, id, route));
 create index if not exists train_days_trip on train_days (kind, id, route, last_ts);
+create table if not exists train_provinces (day text not null, kind text not null, id text not null,
+    route text not null, province text not null, first_ts integer not null, last_ts integer not null,
+    delay integer, seen integer not null, primary key (day, kind, id, route, province));
 """
 
 TRAIN_KINDS = [
@@ -59,8 +62,11 @@ def collect(db: sqlite3.Connection, now: datetime | None = None, check_fns: dict
         db.executemany("insert into checks values (?, ?, ?, ?, ?, ?)",
                        [(ts, key, int(ok), ms, detail, counted) for key, (ok, ms, detail, _) in results.items()])
         if counted:
-            for kind, check, read in (("ld", "live", lambda b: (trains.long_distance_trains(b, checks.station_names()), [])),
-                                      ("cer", "cercanias", trains.cercanias_trains)):
+            names, provinces = checks.station_names(), checks.station_provinces()
+            for kind, check, read, places in (
+                    ("ld", "live", lambda b: (trains.long_distance_trains(b, names), []),
+                     lambda b: trains.long_distance_places(b, names, provinces)),
+                    ("cer", "cercanias", trains.cercanias_trains, lambda doc: trains.cercanias_places(doc, provinces))):
                 data = results.get(check, (None, None, None, None))[3]
                 try:
                     delays, canceled = read(data) if data else ([], [])
@@ -70,6 +76,7 @@ def collect(db: sqlite3.Connection, now: datetime | None = None, check_fns: dict
                                    (ts, kind, s["n"], s["on_time"], s["le5"], s["le15"], s["over60"], s["canceled"],
                                     s["worst_delay"], s["worst_id"], s["worst_route"]))
                         record_trains(db, ts, kind, delays, canceled)
+                        record_places(db, ts, kind, places(data))
                 except Exception as err:  # un tren con campos raros no se lleva por delante la ronda
                     print(f"muestra {kind} descartada: {type(err).__name__}", file=sys.stderr, flush=True)
     marks = " ".join(f"{key}:{'ok' if ok else 'KO'}" for key, (ok, *_rest) in results.items())
@@ -96,9 +103,25 @@ def record_trains(db: sqlite3.Connection, ts: int, kind: str, delays: list, canc
                    (trip[0] if trip else day, kind, tid, route, ts, ts, delay, delay, gone))
 
 
+def record_places(db: sqlite3.Connection, ts: int, kind: str, places: list) -> None:
+    """Por qué provincias pasa cada tren y trayecto cada día, con el retraso de la última vez que se le vio en
+    cada una. El día es el del viaje en train_days (record_trains va antes en la misma ronda). Todavía no sale
+    en la página: se guarda para ver si da para una cifra por provincia."""
+    for delay, tid, route, province in places:
+        trip = db.execute("select day from train_days where kind = ? and id = ? and route = ? and last_ts = ?",
+                          (kind, tid, route, ts)).fetchone()
+        if not trip:  # un tren que train_days no cuenta (sin número, horas de adelanto) tampoco cuenta aquí
+            continue
+        db.execute("""insert into train_provinces (day, kind, id, route, province, first_ts, last_ts, delay, seen)
+                      values (?, ?, ?, ?, ?, ?, ?, ?, 1)
+                      on conflict (day, kind, id, route, province) do update set last_ts = excluded.last_ts,
+                          delay = excluded.delay, seen = seen + 1""",
+                   (trip[0], kind, tid, route, province, ts, ts, delay))
+
+
 def prune(db: sqlite3.Connection, now: datetime) -> None:
     """De las comprobaciones de las webs se guardan los últimos RETENTION. Los trenes no se borran nunca: ni las
-    cuentas de cada ronda ni cada tren de cada día. Es el histórico, y de ahí saldrá cómo cambian los retrasos."""
+    cuentas de cada ronda ni cada tren de cada día, ni por qué provincias pasó. Es el histórico, y de ahí saldrá cómo cambian los retrasos."""
     cutoff = int((now - RETENTION).timestamp())
     with db:
         db.execute("delete from checks where ts < ?", (cutoff,))

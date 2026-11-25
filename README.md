@@ -86,6 +86,12 @@ día que se enseña: hoy o, de madrugada, hasta que han circulado 20 trenes de l
 que enseña la página. También sigue saliendo la proporción por ronda de las últimas 24 y 72 horas (cada tren, una
 vez por ronda mientras circula).
 
+**Por provincia (se guarda, todavía no se enseña):** cada ronda apunta también por qué provincia va cada tren, con
+el retraso de la última vez que se le vio en ella. En larga y media distancia, la de su estación anterior y la de la
+siguiente (entre dos provincias, cuenta en las dos). En Cercanías, la de su próxima parada; un viaje cuya parada no
+está en la lista de estaciones de Renfe CLI (hoy, cerca de 4 de cada 10) se queda sin provincia. Las provincias salen
+de esa lista. Sirve para ver si da para una cifra por provincia antes de enseñarla.
+
 Renfe actualiza el mapa de larga distancia cada ~15 s, Cercanías cada ~20 s y el horario una vez al día (medido
 el 24 nov 2026).
 

@@ -140,3 +140,27 @@ def test_day_counts_only_its_own_rounds(monkeypatch):
     web = next(s for s in d["services"] if s["key"] == "web")
     assert (d["day"]["rounds"], d["day"]["all_ok"], web["day"]) == (3, 3, {"ok": 3, "n": 3})
     assert d["day"]["to_ts"] == int(NOW.timestamp())
+
+
+def test_provinces_keep_each_trains_last_delay_there_and_its_day():
+    db = memory_db()
+    before = int(datetime(2026, 11, 24, 22, 50, tzinfo=timezone.utc).timestamp())  # 23:50 en Madrid
+    rounds = [[(3, "100", "A → B", "Madrid")],
+              [(6, "100", "A → B", "Madrid"), (6, "100", "A → B", "Toledo")],
+              [(9, "100", "A → B", "Toledo")]]  # ya pasada la medianoche
+    for i, places in enumerate(rounds):
+        ts = before + 600 * i
+        store.record_trains(db, ts, "ld", [p[:3] for p in places[:1]], [])
+        store.record_places(db, ts, "ld", places + [(-200, "200", "A → B", "Madrid")])  # 200: no es un dato
+    assert db.execute("select day, id, province, delay, seen from train_provinces order by province").fetchall() == [
+        ("2026-11-24", "100", "Madrid", 6, 2), ("2026-11-24", "100", "Toledo", 9, 2)]
+
+
+def test_a_round_stores_where_each_train_was(monkeypatch):
+    monkeypatch.setattr(checks, "network_ok", lambda: True)
+    monkeypatch.setattr(checks, "station_provinces", lambda: {"18000": "Madrid"})
+    db = memory_db()
+    feed = fake(True, {"entity": [{"tripUpdate": {"trip": {"tripId": "a"}, "delay": 60,
+                                                  "stopTimeUpdate": [{"stopId": "18000"}]}}]})
+    store.collect(db, NOW, {"cercanias": feed})
+    assert db.execute("select kind, id, province, delay from train_provinces").fetchall() == [("cer", "a", "Madrid", 1)]
