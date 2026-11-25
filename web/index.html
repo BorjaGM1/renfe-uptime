@@ -17,7 +17,7 @@
 <meta name="twitter:title" content="¿Cuántos nueves tiene Renfe?">
 <meta name="twitter:description" content="El uptime de Renfe medido como el de un servicio de software: sus webs y sus trenes, cada 5 minutos.">
 <meta name="twitter:image" content="https://renfe.borjagm1.com/og.png">
-<!-- og.png es el billete tumbado de una ronda (billete.js, `imagen(L, false)`). Es fija: no cambia con cada ronda. -->
+<!-- og.png es el billete tumbado de una ronda (billete.js, `imagen(L)`). Es fija: no cambia con cada ronda. -->
 <!-- El icono lo dibuja billete.js con la cifra de la ronda; hasta entonces, ninguno (y sin pedir favicon.ico). -->
 <link rel="icon" href="data:,">
 <meta name="color-scheme" content="dark">
@@ -442,13 +442,13 @@ function render(d) {
 }
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-// ── Guardar: los mismos planos, pintados en canvas. Cada pieza por separado y «los tres» juntos, sobre el
-//    mostrador. Todas llevan dentro el aviso. Con compartir nativo en el móvil; si no, descarga. ──
+// ── Guardar: los mismos planos, pintados en canvas. Cada pieza por separado y las tres juntas: solo las piezas,
+//    sin textos alrededor (el aviso va impreso en cada una). Con compartir nativo en el móvil; si no, descarga. ──
 const LAMINAS = {
-  billete: () => [b.imagen(L, true), "billete"],
-  cercanias: () => [b.lamina([{ P: b.planoCercaniasDe(CERC), s: 5 }], { min: 1080 }), "cercanias"],
-  recibo: () => [b.lamina([{ P: b.planoRecibo(L), s: 4.4 }], { min: 900 }), "justificante"],
-  tres: () => [b.lamina([{ P: b.planoVertical(L), s: 2.3 }, ...(CERC ? [{ P: b.planoCercaniasDe(CERC), s: 2.9, dy: 40 }] : []), { P: b.planoRecibo(L), s: 2.5, dy: 120 }], { cuerpo: 36 }), "los-tres"],
+  billete: () => [b.lamina([{ P: b.planoVertical(L), s: 3.2 }]), "billete"],
+  cercanias: () => [b.lamina([{ P: b.planoCercaniasDe(CERC), s: 5 }]), "cercanias"],
+  recibo: () => [b.lamina([{ P: b.planoRecibo(L), s: 4.4 }]), "justificante"],
+  tres: () => [b.lamina([{ P: b.planoVertical(L), s: 2.3 }, ...(CERC ? [{ P: b.planoCercaniasDe(CERC), s: 2.9 }] : []), { P: b.planoRecibo(L), s: 2.5 }]), "las-tres"],
 };
 async function guardar(cual) {
   const [cv, nombre] = LAMINAS[cual]();

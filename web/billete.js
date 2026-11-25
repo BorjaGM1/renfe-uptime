@@ -790,54 +790,28 @@ export function pinta(ctx, P, x, y, s) {
   ctx.restore();
 }
 
-// La imagen que se guarda. De pie, 1080 × 1350 (4:5, lo más alto que X enseña sin recortar): el billete sobre el
-// mostrador y, a su lado, la frase que en la página va debajo del cartón, como la cartela de una pieza.
-// Tumbado, 1200 × 630 (la tarjeta de X): el billete casi a sangre. En las dos, el aviso «No es de Renfe · no
-// válido para viajar» va impreso en el propio cartón.
-export function imagen(L, vertical) {
+// La imagen de compartir el enlace (og.png): el billete tumbado, casi a sangre, a 1200 × 630, la tarjeta de X.
+// El aviso «No es de Renfe · no válido para viajar» va impreso en el propio cartón.
+export function imagen(L) {
   const cv = document.createElement("canvas"), ctx = cv.getContext("2d");
-  if (vertical) {
-    cv.width = 1080; cv.height = 1350;
-    ctx.fillStyle = COLOR.mostrador; ctx.fillRect(0, 0, 1080, 1350);
-    const s = 2.15, x0 = 50, y0 = (1350 - 570 * s) / 2;
-    pinta(ctx, planoVertical(L), x0, y0, s);
-    const tc = L.tc, cx = x0 + 305 * s + 46, cw = 1080 - 50 - cx, pie = y0 + 570 * s;
-    ctx.fillStyle = COLOR.claro; ctx.textBaseline = "alphabetic";
-    const frase = !tc || tc.nines === null ? "" : `De cada 100 trenes de ${LMD} ${L.delDia}, ${tc.onTimeOf100} iban en hora. Un nueve son 90.`;
-    _upx = Infinity;   // la cartela va en píxeles de la imagen, no en unidades del plano
-    const zf = 32, lines = frase ? en_lineas(frase, T.frase, zf, cw) : [];
-    const y1 = pie - 62 - (lines.length - 1) * zf * 1.3;
-    ctx.font = fuente(T.frase, zf); lines.forEach((ln, i) => ctx.fillText(ln, cx, y1 + i * zf * 1.3));
-    const sitio = { ...T.leyenda, k: 1, min: 0 }, zs = Math.min(27, 27 * cw / ancho(c.SITE, sitio, 27, 0.075));
-    ctx.font = fuente(sitio, zs);
-    let ux = cx; for (const ch of c.SITE.toUpperCase()) { ctx.fillText(ch, ux, pie - 4); ux += ctx.measureText(ch).width + zs * (sitio.tr ?? 0.075); }
-    // Arriba de la cartela, el aviso entero.
-    ctx.font = fuente(T.frase, 25); ctx.fillStyle = COLOR.claro;
-    en_lineas(AVISO_IMG, T.frase, 25, cw).forEach((ln, i) => ctx.fillText(ln, cx, y0 + 25 + i * 34));
-  } else {
-    cv.width = 1200; cv.height = 630;
-    ctx.fillStyle = COLOR.mostrador; ctx.fillRect(0, 0, 1200, 630);
-    pinta(ctx, planoHorizontal(L), 30, 9, 2);
-  }
+  cv.width = 1200; cv.height = 630;
+  ctx.fillStyle = COLOR.mostrador; ctx.fillRect(0, 0, 1200, 630);
+  pinta(ctx, planoHorizontal(L), 30, 9, 2);
   return cv;
 }
 
-// Una lámina con una o varias piezas sobre el mostrador y, debajo, bien legible, el aviso: la imagen que se
-// guarda de Cercanías, del justificante y de «los tres». piezas: [{ P, s, dy }], con P ya compuesto.
+// Lo que se guarda de cada pieza y de «las tres»: solo las piezas, sobre un margen del mostrador (es lo que se
+// ve por los agujeros) y sin ningún texto alrededor. El aviso ya va impreso en cada una.
+// piezas: [{ P, s, dy }], con P ya compuesto.
 export function lamina(piezas, o = {}) {
-  const mx = o.margen ?? 64, gap = o.gap ?? 56, zt = o.cuerpo ?? 30;
+  const mx = o.margen ?? 48, gap = o.gap ?? 56;
   const wP = piezas.reduce((n, q) => n + q.P.w * q.s, 0) + gap * (piezas.length - 1);
-  const W = Math.round(Math.max(o.min ?? 0, wP + 2 * mx)), hP = Math.max(...piezas.map((q) => q.P.h * q.s + (q.dy ?? 0)));
-  _upx = Infinity;   // el pie va en píxeles de la imagen
-  const lineas = en_lineas(AVISO_IMG, T.frase, zt, W - 2 * mx), pasoT = zt * 1.34, y0 = mx + hP + 44 + zt;
-  const cv = document.createElement("canvas"); cv.width = W; cv.height = Math.round(y0 + lineas.length * pasoT + zt * 0.5 + mx * 0.6);
+  const hP = Math.max(...piezas.map((q) => q.P.h * q.s + (q.dy ?? 0)));
+  const cv = document.createElement("canvas"); cv.width = Math.round(wP + 2 * mx); cv.height = Math.round(hP + 2 * mx);
   const ctx = cv.getContext("2d");
   ctx.fillStyle = COLOR.mostrador; ctx.fillRect(0, 0, cv.width, cv.height);
-  let x = (W - wP) / 2;
+  let x = mx;
   for (const q of piezas) { pinta(ctx, q.P, x, mx + (q.dy ?? 0), q.s); x += q.P.w * q.s + gap; }
-  ctx.textBaseline = "alphabetic"; ctx.fillStyle = COLOR.claro; ctx.font = fuente(T.frase, zt);
-  lineas.forEach((ln, i) => ctx.fillText(ln, mx, y0 + i * pasoT));
-  ctx.fillStyle = COLOR.medio; ctx.font = fuente(T.frase, zt * 0.82); ctx.fillText(c.SITE, mx, y0 + lineas.length * pasoT);
   return cv;
 }
 
